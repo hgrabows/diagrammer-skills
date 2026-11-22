@@ -1,0 +1,2 @@
+Mermaid does not support \n inside node labels.
+To create multi-line text, you must use <br/>

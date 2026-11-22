@@ -1,0 +1,7 @@
+{
+  "name": "diagrammer",
+  "description": "Erzeugt Mermaid- und PlantUML-Diagramme eines ausdrücklich genannten Typs, prüft sie mit dem echten Renderer und legt Quelldatei, SVG und PNG ab.",
+  "author": {
+    "name": "hgrabows"
+  }
+}

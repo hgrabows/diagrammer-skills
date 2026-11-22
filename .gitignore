@@ -1,0 +1,20 @@
+# PlantUML-jar wird nicht mitversioniert (siehe README, Abschnitt Voraussetzungen)
+skills/diagrammer/vendor/*.jar
+
+# Vom Skill erzeugte Diagramme, wenn er in diesem Ordner selbst benutzt wird
+/diagrams/
+
+# Python und Werkzeuge
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Lokale Einstellungen und Geheimnisse
+.env
+.env.*
+config.json
+.claude/settings.local.json
+
+# macOS
+.DS_Store

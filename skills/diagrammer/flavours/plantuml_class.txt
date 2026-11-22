@@ -1,0 +1,56 @@
+Remove notes. Stick strong to the example.
+
+@startuml
+left to right direction
+hide circle
+
+' === Student ===
+class Student {
+    --
+    MATRIKEL_NR (PK)
+    --
+    STUDIENGANG
+    NACHNAME
+    VORNAME
+    STRASSE
+    ORT
+    LAND
+    EINSCHREIB_DATUM
+    ABSCHLUSS
+}
+
+' === Teilnahme (Zwischentabelle) ===
+class Teilnahme {
+    --
+    MATRIKEL_NR (FK)
+    RAUM_NR (FK)
+    UHRZEIT (FK)
+    WOCHENTAG (FK)
+    --
+    Datum_der_besuchten_Std
+    Abgenommene_Aufgabe
+}
+
+' === Veranstaltung ===
+class Veranstaltung {
+    --
+    RAUM_NR (PK)
+    UHRZEIT (PK)
+    WOCHENTAG (PK)
+    --
+    PROFESSOREN_KUERZEL
+    FACH_KUERZEL
+    MITARBEITER_KUERZEL
+    VERANSTALTUNGSTYP
+    SEMESTER
+}
+
+' === Beziehungen ===
+Student ||--o{ Teilnahme : "nimmt teil"
+Veranstaltung ||--o{ Teilnahme : "wird besucht in"
+
+' --- Layout-Hilfe: alles in einer Zeile halten ---
+Student -[hidden]-> Teilnahme
+Teilnahme -[hidden]-> Veranstaltung
+
+@enduml
