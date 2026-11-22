@@ -1,6 +1,6 @@
 ---
 name: diagrammer
-description: Creates a Mermaid or PlantUML diagram of an explicitly named type (ER diagram, sequence diagram, flowchart, class diagram, state diagram, mindmap, Gantt, C4 and more) from a text, a file or the current project, validates it with the real renderer and saves the source file together with an SVG and a PNG. Use when the user invokes /diagrammer or wants a rendered diagram file (Mermaid, PlantUML, SVG, PNG).
+description: Creates a Mermaid or PlantUML diagram of an explicitly named type (ER diagram, sequence diagram, flowchart, class diagram, state diagram, mindmap, Gantt, C4, use case, swimlane, Venn, Ishikawa and more) from a text, a file or the current project, validates it with the real renderer and saves the source file together with an SVG and a PNG. Use when the user invokes /diagrammer or wants a rendered diagram file (Mermaid, PlantUML, SVG, PNG).
 argument-hint: "<type> [mermaid|plantuml] [source or instruction]"
 ---
 
@@ -118,10 +118,20 @@ English and German, not a fixed spelling: hyphens, upper and lower case and addi
 | treemap, kacheldiagramm | `treemap.md` | – |
 | packet, protocol header, paket, protokollkopf | `packet.md` | – |
 | zenuml | `zenuml.md` | – |
+| usecase, use case, anwendungsfall | `useCase.md` | – |
+| swimlane, swim lanes, lanes, schwimmbahn | `swimlane.md` | – |
+| venn, mengen, mengendiagramm | `venn.md` | – |
+| ishikawa, fishbone, cause and effect, fischgräte, ursache-wirkung | `ishikawa.md` | – |
+| treeview, tree view, folder tree, file tree, ordnerbaum, verzeichnisbaum | `treeView.md` | – |
+| wardley, wardley map | `wardley.md` | – |
+| cynefin | `cynefin.md` | – |
+| event modeling, eventmodeling, event model | `eventModeling.md` | – |
+| railroad, syntax diagram, grammar, ebnf, syntaxdiagramm, grammatik | `railroad.md` | – |
+| agentflow, agent flow, agent workflow | `agentFlow.md` | – |
 
 ## Requirements
 
-Mermaid needs `node` and the Mermaid CLI `mmdc`. PlantUML needs the `plantuml` command or a
+Mermaid needs `node` and the Mermaid CLI `mmdc` in version 12 or newer. PlantUML needs the `plantuml` command or a
 PlantUML jar with `java` (environment variable `PLANTUML_JAR` or a jar in the `vendor/`
 folder), and for class and ER diagrams also Graphviz (`dot`). If `render.py` reports that a
 tool is missing,

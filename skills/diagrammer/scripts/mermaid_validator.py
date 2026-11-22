@@ -6,6 +6,7 @@ validate_mermaid_file(file_path, verbose=False) -> (ok: bool, message: str)
 - Renders via Mermaid CLI (mmdc). mmdc parses and renders in a real browser, so a syntax
   error makes it exit non-zero with the parser message (line number included).
 - Supports .mmd files or Markdown files containing ```mermaid fenced blocks.
+- Needs Mermaid CLI 12 or newer: the PNG resolution is set with its `--size` option.
 
 Differs from the project's original validator: the separate Node pre-parse step is gone.
 Without a browser DOM it rejected valid diagrams of several types (state, mindmap, C4,
@@ -22,7 +23,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from svg_size import SvgSize, capped_dpi, read_svg_size
+from svg_size import SvgSize, max_png_side, read_svg_size
 
 
 def _extract_mermaid_code(content: str) -> Optional[str]:
@@ -38,9 +39,7 @@ def _extract_mermaid_code(content: str) -> Optional[str]:
 
 DEFAULT_SCREEN_DPI = 96.0
 DEFAULT_PNG_DPI = 600
-DEFAULT_VIEWPORT = (800, 600)  # mmdc's own default page size
-VIEWPORT_MARGIN_PX = 16  # the page body's default margin (8 px on each side)
-STACK_FRAME_PATTERN = re.compile(r"^\s*at\s|\((?:/|file://)[^)]*:\d+:\d+\)\s*$")
+STACK_FRAME_PATTERN = re.compile(r"^\s*at\s|\((?:/|file://|https?://)[^)]*:\d+:\d+\)\s*$")
 ERROR_SVG_MARKER = 'aria-roledescription="error"'
 
 
@@ -56,32 +55,17 @@ def _resolve_target_png_dpi() -> int:
         return DEFAULT_PNG_DPI
 
 
-def _build_png_scale_args(target_dpi: int) -> List[str]:
-    """Build CLI args that scale the PNG towards the requested DPI.
+def _build_png_size_args(target_dpi: int, svg_size: SvgSize) -> List[str]:
+    """Build the CLI args that set the PNG resolution (needs Mermaid CLI 12 or newer).
 
-    mmdc parses --scale as an integer, so 600 dpi (6.25x) effectively renders at 6x.
-    Passing the integer makes that explicit and keeps the size cap exact.
-    """
-    scale = max(int(target_dpi / DEFAULT_SCREEN_DPI), 1)
-    return ["--scale", str(scale)]
-
-
-def _build_viewport_args(svg_size: SvgSize) -> List[str]:
-    """Size the browser viewport to the diagram.
-
-    mmdc lays the page out 800 px wide and shrinks any wider diagram to fit, which turns a
-    wide diagram into a tiny PNG. Diagrams that already fit keep the default viewport, so
-    their rendering is unchanged.
+    `--size` gives the PNG's longest side in pixels. It is the diagram's size at the target
+    DPI, capped so that a large diagram gets a lower resolution instead of a huge image.
+    Without a known SVG size the whole-number `--scale` factor is the fallback.
     """
     if not svg_size:
-        return []
-    width, height = svg_size
-    return [
-        "--width",
-        str(max(DEFAULT_VIEWPORT[0], math.ceil(width) + VIEWPORT_MARGIN_PX)),
-        "--height",
-        str(max(DEFAULT_VIEWPORT[1], math.ceil(height) + VIEWPORT_MARGIN_PX)),
-    ]
+        return ["--scale", str(max(int(target_dpi / DEFAULT_SCREEN_DPI), 1))]
+    wanted = math.ceil(max(svg_size) * target_dpi / DEFAULT_SCREEN_DPI)
+    return ["--size", str(max(1, min(wanted, max_png_side())))]
 
 
 def _run_mmdc(
@@ -98,8 +82,6 @@ def _run_mmdc(
         input_path,
         "-o",
         output_path,
-        "-t",
-        "default",
         "-b",
         "transparent",
     ]
@@ -174,8 +156,7 @@ def validate_mermaid_file(file_path: str, verbose: bool = False) -> Tuple[bool, 
             return False, "Mermaid reported a syntax error in the diagram text."
 
         svg_size = read_svg_size(svg_output)
-        png_dpi = capped_dpi(_resolve_target_png_dpi(), svg_size)
-        png_args = _build_png_scale_args(png_dpi) + _build_viewport_args(svg_size)
+        png_args = _build_png_size_args(_resolve_target_png_dpi(), svg_size)
         png_result = _run_mmdc(mmdc, input_target, str(png_output), extra_args=png_args)
         if png_result.returncode != 0 or not png_output.exists():
             message = _clean_mmdc_error(png_result.stderr) or _clean_mmdc_error(png_result.stdout)

@@ -31,10 +31,22 @@ Class diagrams are ideal when you need to:
 
 ### Basic Structure
 
+The diagram starts with the keyword `classDiagram`, followed by class definitions and relationship lines, one statement per line.
+
+```text
+classDiagram
+    class <ClassName> { <members> }
+    <ClassA> <arrow> <ClassB> : <label>
+```
+
 ```mermaid
 classDiagram
-    [class definitions]
-    [relationships]
+    class Order {
+        +int id
+        +total() Money
+    }
+    class Customer
+    Customer --> Order : places
 ```
 
 ### Class Definition
@@ -45,18 +57,27 @@ classDiagram
     class ClassName
 ```
 
+A class is also created implicitly when its name appears in a relationship line. Class names consist of letters, digits, underscores and dashes. For other display text use a label (`class Item["Order Item"]`) or backticks (``class `Order Item` ``).
+
 #### Class with Members
 ```mermaid
 classDiagram
     class ClassName {
-        +attributeType attributeName
-        -privateAttributeType attributeName
-        #protectedAttributeType attributeName
-        +publicAttributeType attributeName
-        methodName(parameterType): returnType
-        -privateMethod(parameterType): returnType
+        +String publicAttribute
+        -int privateAttribute
+        #List~String~ protectedAttribute
+        ~bool packageAttribute
+        +publicMethod(String name) bool
+        -privateMethod() void
+        +abstractMethod()*
+        +staticMethod()$
     }
 ```
+
+- A member with parentheses is a method, everything else is an attribute.
+- The return type follows the closing `)` after a **space**. Do not write `method(): Type`; the renderer adds its own colon and shows `method() : : Type`.
+- `*` after a method marks it abstract (italic), `$` after a method or attribute marks it static (underlined).
+- Single members can also be added outside the block: `ClassName : +String extra`.
 
 #### Class with Annotations
 ```mermaid
@@ -64,29 +85,38 @@ classDiagram
     class ClassName <<annotation>>
 ```
 
+Common annotations are `<<interface>>`, `<<abstract>>`, `<<service>>` and `<<enumeration>>`. Inside a member block the annotation is written on its own first line (see "Interface Implementation").
+
 ### Relationships
 
-| Relationship Type | Syntax | Description |
-|----------------|---------|-----------|
-| Inheritance | `Parent <|-- Child` | "is-a" relationship |
-| Composition | `Parent *-- Child` | "has-a" relationship (strong ownership) |
-| Aggregation | `Parent o-- Child` | "has-a" relationship (weak ownership) |
-| Association | `Parent --> Child` | Basic relationship |
-| Dependency | `Parent ..> Child` | "uses" relationship |
-| Realization | `Parent ..|> Child` | "implements" relationship |
-| Link (Solid) | `Parent -- Child` | Simple connection |
-| Link (Dashed) | `Parent .. Child` | Weak connection |
+A relationship line names two classes with an arrow between them and nothing else, except optional quoted multiplicities and an optional `: label`. The `class` keyword does not belong in a relationship line.
+
+```text
+Arrow    Example            Meaning
+<|--     Parent <|-- Child  Inheritance ("is-a"), triangle at Parent
+*--      Whole *-- Part     Composition (strong ownership), diamond at Whole
+o--      Whole o-- Part     Aggregation (weak ownership), diamond at Whole
+-->      A --> B            Association, arrow at B
+..>      A ..> B            Dependency ("uses"), arrow at B
+..|>     Impl ..|> Iface    Realization ("implements"), triangle at Iface
+--       A -- B             Link (solid)
+..       A .. B             Link (dashed)
+```
+
+Every arrow can be mirrored (`Child --|> Parent`, `Part --* Whole`, `Iface <|.. Impl`); the symbol always sits next to the class it belongs to.
 
 ### Visibility Modifiers
 
-| Symbol | Meaning | Syntax |
+| Symbol | Meaning | Description |
 |--------|---------|---------|
-| Public | `+` | Accessible from anywhere |
-| Private | `-` | Accessible only within the class |
-| Protected | `#` | Accessible within class and subclasses |
-| Package/Internal | `~` | Accessible within package |
+| `+` | Public | Accessible from anywhere |
+| `-` | Private | Accessible only within the class |
+| `#` | Protected | Accessible within class and subclasses |
+| `~` | Package/Internal | Accessible within package |
 
 ### Generic Types
+
+Generics are written with tildes instead of angle brackets, for class names, attribute types, parameters and return types. Nested generics work (`List~List~int~~`). A simple `Map~K, V~` rendered correctly with the installed version, but the official docs list generics with a comma as unsupported, so check the picture when using one. The generic part does not belong to the class name: relationships refer to `ClassName` only.
 
 ```mermaid
 classDiagram
@@ -98,9 +128,27 @@ classDiagram
 ```mermaid
 classDiagram
     class ClassName {
-        methodName(): returnType
-        methodName(parameterType): returnType
+        methodName() returnType
+        methodName(parameterType) returnType
+        getItems() List~Item~
     }
+```
+
+### Notes, Comments and Direction
+
+- `note "text"` adds a free-floating note, `note for ClassName "text"` attaches one to a class. Use `<br>` for a line break; `\n` is printed literally.
+- `%%` starts a comment. Put it on a line of its own. A single `%` is a parse error.
+- `direction TB` (default), `BT`, `LR` or `RL` sets the layout orientation.
+
+```mermaid
+classDiagram
+    direction LR
+    %% the gateway is the only entry point
+    class Gateway
+    class Order
+    Gateway --> Order : routes
+    note "Simplified model"
+    note for Order "Totals include tax<br>and shipping"
 ```
 
 ## Examples
@@ -139,10 +187,10 @@ classDiagram
 ```mermaid
 classDiagram
     class Vehicle
-    class Car <|-- Vehicle
-    class Motorcycle <|-- Vehicle
-    class Truck <|-- Vehicle
-    
+    class Car
+    class Motorcycle
+    class Truck
+
     Vehicle <|-- Car
     Vehicle <|-- Motorcycle
     Vehicle <|-- Truck
@@ -160,9 +208,12 @@ classDiagram
         -Engine engine
         +drive()
     }
-    
-    Car *-- Engine  % Composition (strong ownership)
-    Car o-- Wheel    % Aggregation (weak ownership)
+    class Wheel
+
+    %% Composition (strong ownership)
+    Car *-- Engine
+    %% Aggregation (weak ownership)
+    Car o-- Wheel
 ```
 
 ### Interface Implementation
@@ -182,20 +233,21 @@ classDiagram
         +height
         +area()
     }
-    
+
     Shape <|.. Circle
     Rectangle ..|> Shape
-    Circle : implements Shape
 ```
 
 ### Multiplicity Examples
 
+Multiplicities are quoted texts directly before and/or after the arrow. Usual values are `1`, `0..1`, `1..*`, `*`, `n`, `0..n` and `1..n`. An arrow is always required between the two classes.
+
 ```mermaid
 classDiagram
-    Company "1" --> "*" Employee
-    Employee "1..*" Company
-    Student "1" --> "1..*" Course
-    Course "*" --> "0..n" Student
+    Company "1" --> "1..*" Employee : employs
+    Student "*" -- "1..*" Course : attends
+    Order "1" *-- "0..n" LineItem
+    Galaxy --> "many" Star : contains
 ```
 
 ### Annotated Classes
@@ -212,6 +264,8 @@ classDiagram
 ```
 
 ### Namespace Organization
+
+A `namespace` block draws a frame around its classes. It may contain only class definitions; relationships and notes are written outside the blocks.
 
 ```mermaid
 classDiagram
@@ -233,18 +287,45 @@ classDiagram
     }
 ```
 
+### Nested Namespaces
+
+Namespaces can be nested by placing blocks inside each other or with dot notation (`namespace Infra.Storage` creates `Infra` and, inside it, `Storage`). A label in square brackets replaces the displayed name.
+
+```mermaid
+classDiagram
+    namespace Shop {
+        namespace Catalog {
+            class Product {
+                +String sku
+            }
+        }
+        namespace Sales["Sales and Billing"] {
+            class Order {
+                +total() Money
+            }
+        }
+        class Gateway
+    }
+    namespace Infra.Storage {
+        class OrderTable
+    }
+    Gateway --> Order : routes
+    Order "1" *-- "1..*" Product : contains
+    Order ..> OrderTable : stored in
+```
+
 ## Tips and Best Practices
 
 1. **Use meaningful class names** that reflect their purpose in the system
 2. **Follow UML conventions** for consistent and readable diagrams
-3. **Group related classes** using packages or namespaces to organize complex systems
+3. **Group related classes** using `namespace` blocks to organize complex systems
 4. **Show relationships clearly** - use appropriate arrow types for different relationships
 5. **Limit complexity** - avoid creating overly complex diagrams that are hard to understand
 6. **Use visibility modifiers** to properly encapsulate class members
 7. **Document important attributes** - include type information and constraints
 8. **Consider cardinality** - define multiplicity to show relationship constraints
 9. **Use interfaces** to define contracts and abstract behaviors
-10. **Add notes** to explain complex relationships or design decisions
+10. **Add notes** (`note for ClassName "text"`) to explain complex relationships or design decisions
 11. **Keep diagrams focused** - show only relevant classes and relationships for the current context
 
 **References:**

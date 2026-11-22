@@ -29,11 +29,22 @@ Flowcharts are ideal when you need to:
 
 ### Basic Structure
 
-```mermaid
-flowchart [direction]
-    [node definitions]
-    [connections]
+Template (placeholders, not runnable):
+
+```text
+flowchart <direction>
+    <node definitions>
+    <connections>
 ```
+
+Minimal complete diagram:
+
+```mermaid
+flowchart LR
+    A[Start] --> B[Finish]
+```
+
+Comments start with `%%` and must stand on a line of their own. A comment after a statement on the same line (`A --> B %% note`, or with a single `%`) is a parse error.
 
 ### Direction Declaration
 
@@ -71,52 +82,109 @@ flowchart LR
 | Diamond | `id{text}` | `A{Decision}` |
 | Hexagon | `id{{text}}` | `A{{Prepare}}` |
 | Parallelogram | `id[/text/]` | `A[/Data/]` |
-| Trapezoid | `A[/text/]` | `A[/Operation/]` |
+| Parallelogram (alt) | `id[\text\]` | `A[\Data\]` |
+| Trapezoid | `id[/text\]` | `A[/Operation\]` |
+| Trapezoid (alt) | `id[\text/]` | `A[\Manual/]` |
+| Double Circle | `id(((text)))` | `A(((Stop)))` |
+
+Put the label in double quotes whenever it contains anything other than letters, digits and spaces: `A["Dashboard (logged in)"]`.
 
 #### Node Shapes (New Syntax v11.3.0+)
 
+`id@{ shape: <name>, label: "<text>" }` selects a shape by name. Edges are written separately and refer to the id.
+
 ```mermaid
-flowchart TD
-    A@{ shape: rect, label: "Process" }
-    B@{ shape: diamond, label: "Decision" }
-    C@{ shape: circle, label: "Start" }
+flowchart LR
+    A@{ shape: stadium, label: "Start" }
+    B@{ shape: doc, label: "Read report" }
+    C@{ shape: diamond, label: "Valid?" }
+    D@{ shape: cyl, label: "Store" }
+    E@{ shape: manual-input, label: "Fix by hand" }
+    F@{ shape: docs, label: "Archive copies" }
+    G@{ shape: dbl-circ, label: "End" }
+    A --> B --> C
+    C -->|Yes| D --> F --> G
+    C -->|No| E --> B
 ```
+
+Shape names verified with this renderer: `rect`, `rounded`, `stadium`, `subproc`, `cyl`, `circle`, `dbl-circ`, `diamond`, `hex`, `lean-r`, `lean-l`, `trap-b`, `trap-t`, `odd`, `doc`, `docs`, `procs`, `manual-input`, `manual-file`, `paper-tape`, `delay`, `das`, `lin-cyl`, `datastore`, `notch-rect`, `text`, `braces`. The shapes `fork`, `hourglass`, `sm-circ`, `framed-circle` and `bolt` are drawn without their label.
 
 ### Connection Syntax
 
 #### Basic Connections
 ```mermaid
 flowchart LR
-    A --> B        % Arrow
-    A --- B         % Line
-    A -- text --> B % Arrow with text
-    A ---|text| B   % Line with text
+    %% Arrow
+    A --> B
+    %% Open line
+    B --- C
+    %% Arrow with text, two spellings
+    C -- text --> D
+    D -->|text| E
+    %% Line with text
+    E ---|text| F
 ```
 
 #### Advanced Connections
 ```mermaid
 flowchart LR
-    A ==> B        % Thick arrow
-    A -.-> B       % Dotted arrow
-    A == text ==> B % Thick arrow with text
+    %% Thick arrow
+    A ==> B
+    %% Dotted arrow
+    B -.-> C
+    %% Thick arrow with text
+    C == text ==> D
+    %% Dotted arrow with text
+    D -. text .-> E
+    %% Extra dashes make a link span more ranks
+    A ---> E
 ```
 
 #### Special Connections
 ```mermaid
 flowchart LR
-    A --o B        % Circle edge
-    A --x B        % Cross edge
+    %% Circle end
+    A --o B
+    %% Cross end
+    B --x C
+    %% Arrowheads on both ends
+    C <--> D
+    %% Chain and fan-out in one line
+    D --> E & F --> G
 ```
+
+Keep a space between the link and a node id that starts with `o` or `x`: `A---oB` is read as a circle edge, not as a link to `oB`.
 
 ### Subgraphs
 
+A subgraph that is the source or target of an edge needs an id. Write `subgraph <id> [<Title>]` and use the id in edges; a title with spaces cannot be used as an edge endpoint.
+
 ```mermaid
 flowchart TB
-    subgraph Subgraph Title
+    subgraph sg1 [Subgraph Title]
         A --> B
     end
-    C --> Subgraph Title
+    C --> sg1
 ```
+
+`direction TB|LR|...` as the first line inside a subgraph sets its own layout direction. The word `end` in lower case is reserved; do not use it as a node id.
+
+### Styling Links
+
+Links have no ids. `linkStyle` addresses them by the order in which they are defined, starting at 0; several numbers can be separated by commas, and `default` applies to all links.
+
+```mermaid
+flowchart LR
+    A[Order] --> B{In stock?}
+    B -->|Yes| C[Ship]
+    B -->|No| D[Backorder]
+    D --> B
+    linkStyle 2 stroke:#d33,stroke-width:3px,color:#d33
+    linkStyle 3 stroke:#d33,stroke-dasharray:5 5
+    linkStyle default stroke:#555
+```
+
+Here link 2 (`B -->|No| D`) is drawn thick and red with a red label, link 3 (`D --> B`) dashed red, and the other links grey.
 
 ## Examples
 
@@ -134,20 +202,20 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph Input Phase
+    subgraph input [Input Phase]
         A[User Input] --> B[Validation]
     end
-    
-    subgraph Processing Phase
+
+    subgraph processing [Processing Phase]
         C[Process Data] --> D[Transform]
     end
-    
-    subgraph Output Phase
+
+    subgraph output [Output Phase]
         E[Generate Report] --> F[Display Results]
     end
-    
-    Input Phase --> Processing Phase
-    Processing Phase --> Output Phase
+
+    input --> processing
+    processing --> output
 ```
 
 ### Decision Tree with Multiple Outcomes
@@ -185,11 +253,13 @@ flowchart LR
 
 ### Interactive Flowchart with Click Events
 
+Links only work in the SVG; the PNG is a static picture.
+
 ```mermaid
 flowchart LR
-    A[Click me] --> B[Then click me]
+    A[Docs] --> B[Repo]
     click A "https://example.com" "Open documentation"
-    click B alert "Show alert"
+    click B href "https://example.com/repo" "Open repository" _blank
 ```
 
 
@@ -199,14 +269,11 @@ flowchart LR
 In this project, diagrams are validated via `mmdc` using a strict Mermaid parser.
 To avoid parse errors, please follow these additional constraints when using the classic `id[text]` syntax:
 
-- Do **not** use parentheses `(` `)` inside the label text of `id[text]` nodes.
-- Avoid using the pipe character `|` inside labels.
-- Prefer simple labels such as:
-  - `D[Dashboard - logged in]` instead of `D[Dashboard (logged in)]`.
-
-For more complex labels that must include such characters, consider:
-- Shortening or rephrasing the label, or
-- (If supported by the Mermaid version in this project) using the new v11+ syntax `id@{ shape: ..., label: "..." }`.
+- Unquoted labels must not contain parentheses `(` `)` or the pipe character `|`: `D[Dashboard (logged in)]` and `D[Dashboard | admin]` are parse errors.
+- Quote such labels instead: `D["Dashboard (logged in) | admin"]`. Inside a quoted label write a double quote as `#quot;`.
+- The new syntax `id@{ shape: ..., label: "..." }` always takes a quoted label and has the same effect.
+- Comments are `%%` lines of their own, never trailing text after a statement.
+- Subgraphs used in edges need an id: `subgraph id [Title]`.
 
 
 ## Tips and Best Practices

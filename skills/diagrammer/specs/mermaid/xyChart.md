@@ -31,7 +31,9 @@ An **XY Chart** in Mermaid is a general charting module for visualizing data alo
 - Define `x-axis` (categories or labeled axis).
 - Define `y-axis` with label and numeric range.
 - Add one or more data series: `bar [...]` or `line [...]`.
+- Give a series a name to show it in the legend: `bar "name" [...]`, `line "name" [...]`.
 - Values in a series must align with the X-axis items.
+- Axis and series lines only work inside a chart that starts with `xychart`; a chart needs at least one `bar` or `line`.
 
 ### Basic Structure
 
@@ -81,20 +83,45 @@ xychart horizontal
 ### Axes
 
 **X-Axis**  
-- Typically a **list of categories**:
-  ```mermaid
-  xychart
-      x-axis ["Jan", "Feb", "Mar"]
-  ```
-- If the label has spaces, wrap it in quotes: `"New York"`, `"Total Sales"`.
+- Typically a **list of categories**, optionally with a title in front: `x-axis "Month" ["Jan", "Feb", "Mar"]`
+- Or a numeric range: `x-axis "Concurrent users" 0 --> 500` (the values of a series are then spread evenly over the range).
+- If a title or category has spaces, wrap it in quotes: `"New York"`, `"Total Sales"`.
 
 **Y-Axis**  
-- Always numeric, with a **label** and **range**:
-  ```mermaid
-  y-axis "Value" 0 --> 100
-  ```
+- Always numeric, with a **title** and an optional **range**: `y-axis "Value" 0 --> 100`
+- Without a range (`y-axis "Value"`) the range is derived from the data.
+
+```mermaid
+xychart
+    title "Signups"
+    x-axis "Month" ["Jan", "Feb", "Mar"]
+    y-axis "New users" 0 --> 100
+    line [35, 60, 85]
+```
 
 Make sure the range covers all your data values; otherwise bars/lines may be clipped.
+
+---
+
+### Legend and Colors
+
+Named series appear in a legend to the right of the plot; unnamed series are left out of it. The default colours are pale (a single unnamed line is hard to see), so set `plotColorPalette` when contrast matters: the colours are assigned to the series in the order they are written.
+
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#4c78a8, #f58518, #54a24b"
+---
+xychart
+    title "Response Time by Release"
+    x-axis ["v1.0", "v1.1", "v1.2", "v2.0"]
+    y-axis "Milliseconds" 0 --> 400
+    bar "p95" [320, 290, 240, 180]
+    line "median" [120, 110, 95, 70]
+    line "target" [150, 150, 150, 150]
+```
 
 ---
 
@@ -116,7 +143,7 @@ xychart
     bar [40, 55, 70, 90]
 ```
 
-Some themes allow setting colors via `themeVariables.xyChart`.
+Colors are set via `themeVariables.xyChart` (e.g. `plotColorPalette`, `titleColor`), see above. `showDataLabel: true` under `xyChart` prints each value into its bar, but the labels are drawn very large in this renderer.
 
 ---
 
@@ -127,6 +154,7 @@ Some themes allow setting colors via `themeVariables.xyChart`.
 - Always set a **descriptive title** so readers understand context immediately.
 - Ensure the **Y-axis range** includes your max value.
 - For multi-word labels, always quote them.
+- Name every series when there is more than one, so the legend explains them.
 
 ---
 

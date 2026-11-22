@@ -63,7 +63,7 @@ The result is written to `diagrams/` in the current folder, for example `library
 
 | Engine | Types |
 | --- | --- |
-| Mermaid | ER diagram, class diagram, mindmap, sequence diagram, flowchart, state diagram, Gantt, timeline, architecture, C4, block, GitGraph, Kanban, user journey, requirement, pie, XY chart, quadrant, radar, Sankey, treemap, packet, ZenUML |
+| Mermaid | ER diagram, class diagram, mindmap, sequence diagram, flowchart, state diagram, Gantt, timeline, architecture, C4, block, GitGraph, Kanban, user journey, requirement, pie, XY chart, quadrant, radar, Sankey, treemap, packet, ZenUML, use case, swimlane, Venn, Ishikawa (fishbone), TreeView, Wardley map, Cynefin, Event Modeling, railroad (syntax) diagram, Agent Flow |
 | PlantUML | ER diagram (a custom notation based on the class diagram, without data types), class diagram, mindmap |
 
 The keywords for each type are listed in [SKILL.md](skills/diagrammer/SKILL.md).
@@ -72,7 +72,7 @@ The keywords for each type are listed in [SKILL.md](skills/diagrammer/SKILL.md).
 
 | For | Needed | Installation |
 | --- | --- | --- |
-| Mermaid | Node.js and the Mermaid CLI `mmdc` | `npm install -g @mermaid-js/mermaid-cli` |
+| Mermaid | Node.js 22.12+ and the Mermaid CLI `mmdc`, version 12 or newer | `npm install -g @mermaid-js/mermaid-cli` |
 | PlantUML | PlantUML and Graphviz | macOS: `brew install plantuml graphviz` |
 
 PlantUML is only needed for the three PlantUML variants. Instead of installing it, a PlantUML
@@ -86,7 +86,7 @@ To see what is present on your machine and what is missing, run this in a cloned
 python3 skills/diagrammer/scripts/render.py --check
 ```
 
-Tested on macOS with Mermaid CLI 11.12 and PlantUML 1.2025.10.
+Tested on macOS with Mermaid CLI 12.2 (Mermaid 12.3) and PlantUML 1.2025.10.
 
 ## Customising
 
@@ -107,6 +107,13 @@ uvx pytest -q tests
 
 Tests that need Mermaid or PlantUML are skipped when the tool is missing.
 
+After updating Mermaid or PlantUML, or after editing a spec, render every example of all
+specs and list the ones that fail:
+
+```bash
+python3 tools/sweep_specs.py /tmp/diagrammer-sweep
+```
+
 Repository layout:
 
 ```text
@@ -117,6 +124,7 @@ skills/diagrammer/
   scripts/      render.py validates and renders a diagram file
   vendor/       place for a PlantUML jar (not version-controlled)
 tests/          tests for the scripts
+tools/          sweep_specs.py renders every example in the specs
 ```
 
 ## License

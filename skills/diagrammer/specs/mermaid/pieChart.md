@@ -30,11 +30,22 @@ Drawing a pie chart in Mermaid is simple:
 
 ### Basic Structure
 
+Template (placeholders, not runnable):
+
+```text
+pie [showData]
+    title <Chart Title>
+    "<Label 1>" : <number>
+    "<Label 2>" : <number>
+```
+
+Minimal complete chart:
+
 ```mermaid
-pie title Chart Title
-    "Label 1" : value1
-    "Label 2" : value2
-    "Label 3" : value3
+pie title Browser share
+    "Chrome" : 65
+    "Safari" : 20
+    "Other" : 15
 ```
 
 ### With Data Values
@@ -80,6 +91,9 @@ pie showData
 | Parameter      | Description                                                        | Default value |
 | -------------- | ------------------------------------------------------------------ | ------------- |
 | `textPosition` | Axial position of pie slice labels (0.0=center, 1.0=outer edge)    | `0.75`        |
+| `donutHole`    | Size of the hole of a donut chart, `0` to `0.9`                    | `0`           |
+| `legendPosition` | `top`, `bottom`, `left`, `right` or `center`                     | `right`       |
+| `highlightSlice` | Label of one slice that is pulled out of the circle              | none          |
 
 Example with configuration (YAML frontmatter):
 
@@ -99,11 +113,31 @@ pie showData
     "Iron" : 5
 ```
 
+### Donut Chart
+
+A `donutHole` greater than 0 turns the pie into a donut. The example also moves the legend below the chart; `showData` adds the raw values to the legend.
+
+```mermaid
+---
+config:
+  pie:
+    donutHole: 0.5
+    legendPosition: bottom
+---
+pie showData
+    title Tickets by channel
+    "E-mail" : 48
+    "Chat" : 32
+    "Phone" : 20
+```
+
 ## Tips
 
 - Use pie charts for simple, clear part-to-whole comparisons.
 - Avoid using too many slices; 5-7 categories is ideal.
 - Always label slices clearly for readability.
+- Labels must be in double quotes; values are plain numbers (up to two decimals), not expressions or percentages with a `%` sign.
+- The slices show percentages; the absolute values only appear with `showData`.
 
 **References:**
 - [Mermaid.js Pie Chart Documentation](https://mermaid.js.org/syntax/pie.html)

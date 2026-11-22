@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -54,6 +55,7 @@ def test_clean_mmdc_error_drops_stack_trace() -> None:
         "Error: Parse error on line 3:\n"
         "...Idle --> --> Running\n"
         "Expecting 'ID', got '-->'\n"
+        "Parser.parseError (https://mermaid-cli-intercept.invalid/opt/mermaid/dist/state.mjs:205:21)\n"
         "Parser3.parseError (/opt/mermaid/dist/mermaid.js:129842:28)\n"
         "    at #evaluate (file:///opt/puppeteer/ExecutionContext.js:10:1)\n"
     )
@@ -220,8 +222,8 @@ def test_large_plantuml_png_is_scaled_down_not_cropped(tmp_path: Path) -> None:
 
 
 @needs_mmdc
-def test_wide_mermaid_png_is_not_shrunk_to_default_viewport(tmp_path: Path) -> None:
-    """mmdc squeezes wide diagrams into an 800 px page unless the viewport is widened."""
+def test_wide_mermaid_png_is_capped_not_shrunk(tmp_path: Path) -> None:
+    """A very wide diagram must fill the size limit instead of collapsing to the page width."""
     steps = "\n".join(f"    S{i}[Schritt {i}] --> S{i + 1}[Schritt {i + 1}]" for i in range(40))
     diagram = tmp_path / "wide.mmd"
     diagram.write_text(f"flowchart LR\n{steps}\n", encoding="utf-8")
@@ -230,23 +232,27 @@ def test_wide_mermaid_png_is_not_shrunk_to_default_viewport(tmp_path: Path) -> N
     svg_width, svg_height = svg_size.read_svg_size(diagram.with_suffix(".svg")) or (0.0, 0.0)
     png_width, png_height = _png_size(diagram.with_suffix(".png"))
     limit = svg_size.DEFAULT_MAX_PNG_SIDE_PX
-    assert 4000 < svg_width < limit, "diagram width is outside the range this test is built for"
-    # mmdc scales by whole factors only: the largest one that keeps the PNG within the limit.
-    expected_width = svg_width * (limit // svg_width)
-    assert 0.95 * expected_width <= png_width <= limit
+    assert svg_width * 600 / 96 > limit, "diagram is not wide enough to test the cap"
+    assert 0.97 * limit <= png_width <= limit
     assert png_width / png_height == pytest.approx(svg_width / svg_height, rel=0.1)
 
 
-def test_png_scale_is_a_whole_factor() -> None:
-    assert mermaid_validator._build_png_scale_args(600) == ["--scale", "6"]
-    assert mermaid_validator._build_png_scale_args(108) == ["--scale", "1"]
-    assert mermaid_validator._build_png_scale_args(50) == ["--scale", "1"]
+@needs_mmdc
+def test_small_mermaid_png_is_rendered_at_target_dpi(tmp_path: Path) -> None:
+    diagram = tmp_path / "state.mmd"
+    diagram.write_text(STATE_DIAGRAM, encoding="utf-8")
+    assert render.main([str(diagram)]) == 0
+    svg_width, svg_height = svg_size.read_svg_size(diagram.with_suffix(".svg")) or (0.0, 0.0)
+    png_width, png_height = _png_size(diagram.with_suffix(".png"))
+    assert max(png_width, png_height) == pytest.approx(max(svg_width, svg_height) * 600 / 96, rel=0.03)
 
 
-def test_viewport_args_only_grow_beyond_the_default() -> None:
-    assert mermaid_validator._build_viewport_args(None) == []
-    assert mermaid_validator._build_viewport_args((630.9, 598.0)) == ["--width", "800", "--height", "614"]
-    assert mermaid_validator._build_viewport_args((7239.03, 70.0)) == ["--width", "7256", "--height", "600"]
+def test_png_size_args_follow_dpi_and_cap() -> None:
+    assert mermaid_validator._build_png_size_args(600, (152.0, 299.0)) == ["--size", "1869"]
+    assert mermaid_validator._build_png_size_args(96, (152.0, 299.0)) == ["--size", "299"]
+    assert mermaid_validator._build_png_size_args(600, (7848.0, 61.0)) == ["--size", "8192"]
+    # Without a known SVG size the whole-number scale factor is the fallback.
+    assert mermaid_validator._build_png_size_args(600, None) == ["--scale", "6"]
 
 
 def test_read_svg_size_from_viewbox(tmp_path: Path) -> None:
@@ -275,3 +281,13 @@ def test_max_png_side_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     assert svg_size.max_png_side() == 4096
     monkeypatch.setenv("DIAGRAMMER_MAX_PNG_SIDE", "nonsense")
     assert svg_size.max_png_side() == svg_size.DEFAULT_MAX_PNG_SIDE_PX
+
+
+def test_type_table_and_spec_files_match() -> None:
+    """Every spec named in SKILL.md must exist, and every spec file must be reachable from it."""
+    skill_dir = SCRIPTS_DIR.parent
+    table = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    named = set(re.findall(r"`([A-Za-z0-9_]+\.md)`", table))
+    existing = {path.name for path in (skill_dir / "specs").glob("*/*.md")}
+    assert named - existing == set(), "SKILL.md names specs that do not exist"
+    assert existing - named == set(), "spec files missing from the type table in SKILL.md"

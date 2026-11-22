@@ -31,25 +31,41 @@ User journey diagrams are ideal when you need to:
 
 ### Basic Structure
 
+Template (placeholders, not runnable):
+
+```text
+journey
+    title <Journey Title>
+    section <Section Name>
+        <Task name>: <score>: <comma separated list of actors>
+```
+
+Minimal complete diagram:
+
 ```mermaid
 journey
     title Journey Title
-    [sections]
+    section Section Name
+        Task name: 5: Actor
 ```
 
 ### Section Definition
 
-```mermaid
-journey
-    section Section Name
-        Task name: <score>: <comma separated list of actors>
-```
+`section <name>` starts a group; all following tasks belong to it until the next `section`. Each section gets its own colour.
 
 ### Task Definition
 
+A task is `Task name: score: actors`. The score is an integer from 1 (bad, sad face) to 5 (good, happy face). Several actors are separated by commas; every actor gets a coloured dot and a legend entry. The task name must not contain a colon: `Step 1: do it: 3: Me` still renders, but the fields are shifted and the picture is wrong.
+
 ```mermaid
 journey
-    Task name: <score>: <comma separated list of actors>
+    title Checkout
+    section Cart
+        Review cart: 4: Customer
+        Apply coupon: 2: Customer, Support
+    section Payment
+        Enter card: 3: Customer
+        Confirm order: 5: Customer, Shop
 ```
 
 ## Examples
