@@ -72,20 +72,25 @@ class EntityName {
 
 We use the **class diagram association syntax** with crow’s-foot-style multiplicities:
 
-- `||` for **exactly one** (1)
-- `|o` for **zero or one** (0..1)
-- `}|` for **one or many** (1..*)
-- `}o` for **zero or many** (0..*)
+```text
+meaning               left end   right end
+exactly one (1)       ||         ||
+zero or one (0..1)    |o         o|
+one or many (1..*)    }|         |{
+zero or many (0..*)   }o         o{
+```
+
+The symbol is mirrored at the right end of the line: the circle or bar is always next to the dashes, the crow's foot always next to the entity (`A }o--o{ B`).
 
 In practice, a common pattern is:
 
-```plantuml
+```text
 EntityA ||--o{ EntityB : "relationship name"
 ```
 
 - `EntityA ||` → each `EntityA` instance is on the **one** side.  
 - `o{ EntityB` → `EntityB` instances are on the **many** side (possibly zero).  
-- The quoted label describes the relationship.
+- The quoted label describes the relationship; it is drawn without the quotes.
 
 ---
 
@@ -161,8 +166,8 @@ Participation -[hidden]-> Course
   - Contains metadata such as `professor_code`, `subject_code`, `assistant_code`, `course_type`, and `semester`.
 
 - **Participation**  
-  - Contains only **foreign keys** linking a student to a specific course slot:  
-    `(matriculation_no, room_no, time, weekday)`.  
+  - Its key block contains only **foreign keys** linking a student to a specific course slot:  
+    `(matriculation_no, room_no, time, weekday)`. No column is marked `(PK)`.  
   - Includes descriptive attributes like `date_of_attended_lesson` and `completed_assignment`.  
   - Represents the **n:m relationship** between `Student` and `Course`.
 
@@ -187,10 +192,12 @@ Useful tips for improving diagram readability:
 
 Example layout control:
 
-```plantuml
+```text
 Student -[hidden]-> Participation
 Participation -[hidden]-> Course
 ```
+
+In the example above these two lines put the three entities in one row. Without them `Course` is drawn on the left below `Student`, because both relationships start at the left entity.
 
 ---
 
@@ -200,6 +207,19 @@ Participation -[hidden]-> Course
 - Avoid datatypes in conceptual ER models — focus on **keys and relationships**.  
 - Always model n:m relationships using join tables like `Participation`.  
 - Export diagrams with PlantUML (`-tpng`, `-tsvg`, `-tpdf`) to integrate them into documentation or CI pipelines.
+
+---
+
+## Pitfalls
+
+All of these were observed with PlantUML 1.2025.10.
+
+- **Fragments are not diagrams.** The short snippets above are parts of a diagram. A file without `@startuml` / `@enduml` produces no picture although the render script reports OK.
+- **Never drop all `--` separators.** PlantUML treats a line with parentheses, such as `id (PK)`, as a method. In a body without any `--` line these columns are moved into a second compartment below the plain attributes. With at least one separator the columns stay in the written order.
+- **One column per line.** A body on one line (`class A { id (PK) }`) is a syntax error.
+- **`hide circle` is needed.** Without it every entity shows the class icon (a circled C) in front of its name.
+- **The first `--` leaves an empty strip.** The separator directly after `{` is drawn as a thin empty band between the entity name and the key columns. This is the normal look of this notation.
+- **Mind the side of the crow's foot.** `}o` belongs at the left end and `o{` at the right end of a relationship (see the table above); swapped symbols such as `A ||--}o B` are a syntax error.
 
 ---
 

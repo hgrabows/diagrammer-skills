@@ -1,0 +1,11 @@
+stateDiagram-v2
+    [*] --> Active
+    Active --> Closed : close
+    Closed --> [*]
+
+    Active : Order active
+    state Active {
+        [*] --> Picking
+        Picking --> Packing
+        Packing --> [*]
+    }

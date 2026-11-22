@@ -1,0 +1,21 @@
+---
+config:
+  radar:
+    curveTension: 0
+    marginLeft: 90
+    marginRight: 90
+  themeVariables:
+    cScale0: "#d62728"
+    cScale1: "#1f77b4"
+    cScale2: "#2ca02c"
+    radar:
+      curveOpacity: 0.15
+      curveStrokeWidth: 3
+---
+radar-beta
+  title Sprint health per team
+  axis A["Velocity"], B["Quality"], C["Morale"], D["Focus"], E["Delivery"]
+  curve c1["Team Red"]{4, 2, 3, 5, 3}
+  curve c2["Team Blue"]{2, 5, 4, 3, 4}
+  curve c3["Team Green"]{3, 3, 5, 2, 5}
+  max 5

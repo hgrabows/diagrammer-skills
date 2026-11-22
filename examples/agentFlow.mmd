@@ -1,0 +1,39 @@
+---
+title: Support Ticket Pipeline
+---
+agentflow-beta LR
+  connector helpdesk["Helpdesk API"]
+  helpdesk@{ protocol: "http", endpoint: "https://helpdesk.example.com/api" }
+
+  global
+    kb["Knowledge base"]@{ shape: refdoc }
+  end
+
+  ticket["New ticket"]@{ shape: input, example: "Cannot log in" }
+
+  flow triage["Triage Agent"]
+    classify["Classify ticket"]@{ shape: task }
+    urgent["Urgent?"]@{ shape: decision }
+    classify --> urgent
+  end
+  triage@{ model: "small-fast-model", instruction: "Label the ticket and judge urgency." }
+
+  flow resolver["Resolver Agent"]
+    lookup["search_kb"]@{ shape: tool, params: "query :: String", returns: "Articles" }
+    draft["Draft reply"]@{ shape: task }
+    lookup --> draft
+    lookup -.- kb
+  end
+
+  send["Send reply"]@{ shape: action, connectorRef: "helpdesk.reply" }
+  human["Escalate to human"]@{ shape: action }
+
+  ticket --> classify
+  urgent -- no --> lookup
+  urgent -- yes --> human
+  draft --> send
+  draft -- no article found --x human
+  send --> helpdesk
+
+  classDef warn fill:#ffe3e3,stroke:#c92a2a
+  class human warn

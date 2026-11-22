@@ -1,0 +1,52 @@
+@startuml
+title Order Management System (PlantUML Class Diagram)
+left to right direction
+skinparam classAttributeIconSize 0
+
+package "Customer Context" {
+  class Customer {
+    +id : int
+    +name : String
+    +email : String
+    +register(email : String, pw : String) : void
+  }
+  class Address {
+    +street : String
+    +city : String
+    +zip : String
+  }
+  Customer "1" o-- "0..*" Address : has >
+}
+
+package "Order Context" {
+  class Order {
+    +number : String
+    +total : double
+    +place() : void
+  }
+  class OrderLine {
+    +quantity : int
+    +price : double
+  }
+  enum OrderStatus {
+    NEW
+    PAID
+    SHIPPED
+  }
+  Order "1" *-- "1..*" OrderLine
+  Order --> OrderStatus
+}
+
+interface PaymentProvider {
+  +charge(amount : double) : boolean
+}
+
+class CreditCardProvider
+CreditCardProvider ..|> PaymentProvider
+Order ..> PaymentProvider : pays via
+
+note right of PaymentProvider
+  Other providers can be added
+  without modifying Order.
+end note
+@enduml

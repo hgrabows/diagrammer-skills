@@ -1,0 +1,20 @@
+erDiagram
+    CUSTOMER {
+        string customerNumber PK
+        string customerName UK
+    }
+    ORDER {
+        int orderNumber PK
+        string customerNumber FK
+        string deliveryAddress
+    }
+    ORDER_ITEM {
+        int orderItemId PK
+        int orderNumber FK
+        string productCode
+        int quantity
+        float pricePerUnit
+    }
+
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ ORDER_ITEM : contains

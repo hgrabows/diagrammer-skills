@@ -1,0 +1,17 @@
+architecture-beta
+    group edge(internet)[Edge]
+    group app(cloud)[Application]
+    group data(database)[Data]
+
+    service cdn(internet)[CDN] in edge
+    service lb(server)[Load Balancer] in edge
+    service web(server)[Web App] in app
+    service api(server)[API] in app
+    service db(database)[Postgres] in data
+    service cache(disk)[Redis] in data
+
+    cdn:R --> L:lb
+    lb{group}:R --> L:web{group}
+    web:R --> L:api
+    api{group}:R --> L:db{group}
+    db:R -- L:cache

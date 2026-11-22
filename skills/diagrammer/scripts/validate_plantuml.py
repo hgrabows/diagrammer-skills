@@ -26,6 +26,8 @@ from svg_size import capped_dpi, png_side_limit, read_svg_size
 
 PLANTUML_FENCE_PATTERN = re.compile(r"```plantuml\s*\n(.*?)```", re.IGNORECASE | re.DOTALL)
 PLANTUML_START_PATTERN = re.compile(r"@start", re.IGNORECASE)
+THEME_PATTERN = re.compile(r"^\s*!theme\b", re.IGNORECASE | re.MULTILINE)
+LAST_END_PATTERN = re.compile(r"^\s*@end\w*\s*$", re.IGNORECASE | re.MULTILINE)
 APP_ROOT = Path(__file__).resolve().parent
 LOCAL_PLANTUML_DIR = APP_ROOT.parent / "vendor"
 
@@ -144,6 +146,21 @@ def _write_temp_puml(code: str, directory: Path) -> Path:
         return Path(tmp.name)
 
 
+def _with_dpi_after_theme(code: str, dpi: int) -> Optional[str]:
+    """Return the code with `skinparam dpi` appended when a `!theme` is used, else None.
+
+    Some bundled themes (spacelab, cerulean, materia, ...) set their own `skinparam dpi`,
+    which overrides the command-line -Sdpi and yields a tiny PNG. A later skinparam wins.
+    """
+    if not THEME_PATTERN.search(code):
+        return None
+    ends = list(LAST_END_PATTERN.finditer(code))
+    if not ends:
+        return None
+    cut = ends[-1].start()
+    return f"{code[:cut]}skinparam dpi {dpi}\n{code[cut:]}"
+
+
 def _move_output(src: Path, dest: Path) -> None:
     """Move/rename a rendered artifact if it exists."""
     if src.exists():
@@ -181,8 +198,13 @@ def validate_plantuml_file(file_path: str, verbose: bool = False) -> Tuple[bool,
     temp_input: Optional[Path] = None
     temp_svg: Optional[Path] = None
     temp_png: Optional[Path] = None
+    png_input: Optional[Path] = None
 
     try:
+        # Remove stale artifacts so a failed run can never be mistaken for a fresh render.
+        for stale in (svg_target, png_target):
+            stale.unlink(missing_ok=True)
+
         code = None
         lower_suffix = path.suffix.lower()
         if lower_suffix in {".md", ".markdown"}:
@@ -209,8 +231,12 @@ def validate_plantuml_file(file_path: str, verbose: bool = False) -> Tuple[bool,
         # Size the PNG from the SVG: full target DPI when it fits, lower DPI instead of cropping.
         svg_size = read_svg_size(input_path.with_suffix(".svg")) if svg_ok else None
         png_dpi = capped_dpi(_resolve_png_dpi(), svg_size)
+        themed = _with_dpi_after_theme(input_path.read_text(encoding="utf-8"), png_dpi)
+        if themed is not None:
+            png_input = _write_temp_puml(themed, input_path.parent)
+            temp_png = png_input.with_suffix(".png")
         png_result = _run_plantuml(
-            str(input_path),
+            str(png_input or input_path),
             "png",
             dpi=png_dpi,
             limit_px=png_side_limit(png_dpi, svg_size),
@@ -242,6 +268,14 @@ def validate_plantuml_file(file_path: str, verbose: bool = False) -> Tuple[bool,
         else:
             png_target = actual_png
 
+        if not svg_target.exists() or not png_target.exists():
+            for leftover in (svg_target, png_target):
+                leftover.unlink(missing_ok=True)
+            return False, (
+                "PlantUML wrote no image. The diagram text must be enclosed in @startuml ... @enduml "
+                "(or @startmindmap ... @endmindmap and the like)."
+            )
+
         message_parts: list[str] = []
         svg_msg = _collect_message(svg_result)
         png_msg = _collect_message(png_result)
@@ -260,11 +294,12 @@ def validate_plantuml_file(file_path: str, verbose: bool = False) -> Tuple[bool,
     except Exception as exc:
         return False, f"PlantUML rendering failed: {exc}"
     finally:
-        if temp_input and temp_input.exists():
-            try:
-                temp_input.unlink()
-            except Exception:
-                pass
+        for leftover_input in (temp_input, png_input):
+            if leftover_input and leftover_input.exists():
+                try:
+                    leftover_input.unlink()
+                except Exception:
+                    pass
         if temp_svg and temp_svg.exists():
             try:
                 temp_svg.unlink()

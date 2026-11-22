@@ -244,15 +244,33 @@ def test_small_mermaid_png_is_rendered_at_target_dpi(tmp_path: Path) -> None:
     assert render.main([str(diagram)]) == 0
     svg_width, svg_height = svg_size.read_svg_size(diagram.with_suffix(".svg")) or (0.0, 0.0)
     png_width, png_height = _png_size(diagram.with_suffix(".png"))
-    assert max(png_width, png_height) == pytest.approx(max(svg_width, svg_height) * 600 / 96, rel=0.03)
+    # Page-sized diagrams use the whole-number factor 6 (600 dpi would be 6.25).
+    assert max(png_width, png_height) == pytest.approx(max(svg_width, svg_height) * 6, rel=0.03)
 
 
-def test_png_size_args_follow_dpi_and_cap() -> None:
-    assert mermaid_validator._build_png_size_args(600, (152.0, 299.0)) == ["--size", "1869"]
-    assert mermaid_validator._build_png_size_args(96, (152.0, 299.0)) == ["--size", "299"]
+def test_png_size_args_scale_page_sized_and_size_wide_diagrams() -> None:
+    assert mermaid_validator._build_png_size_args(600, (152.0, 299.0)) == ["--scale", "6"]
+    assert mermaid_validator._build_png_size_args(600, (784.0, 196.0)) == ["--scale", "6"]
+    # A tall diagram within the page width gets a smaller factor to respect the cap.
+    assert mermaid_validator._build_png_size_args(600, (400.0, 3000.0)) == ["--scale", "2"]
+    assert mermaid_validator._build_png_size_args(600, (1000.0, 300.0)) == ["--size", "6250"]
     assert mermaid_validator._build_png_size_args(600, (7848.0, 61.0)) == ["--size", "8192"]
-    # Without a known SVG size the whole-number scale factor is the fallback.
     assert mermaid_validator._build_png_size_args(600, None) == ["--scale", "6"]
+
+
+@needs_mmdc
+def test_gantt_png_is_enlarged_not_relaid_out(tmp_path: Path) -> None:
+    """Gantt charts fill the page width; the PNG must keep the SVG's aspect ratio."""
+    diagram = tmp_path / "plan.mmd"
+    diagram.write_text(
+        "gantt\n    dateFormat YYYY-MM-DD\n    section A\n        Task :2024-01-01, 10d\n",
+        encoding="utf-8",
+    )
+    assert render.main([str(diagram)]) == 0
+    svg_width, svg_height = svg_size.read_svg_size(diagram.with_suffix(".svg")) or (0.0, 0.0)
+    png_width, png_height = _png_size(diagram.with_suffix(".png"))
+    assert png_width / png_height == pytest.approx(svg_width / svg_height, rel=0.05)
+    assert png_width >= 5 * svg_width
 
 
 def test_read_svg_size_from_viewbox(tmp_path: Path) -> None:
@@ -291,3 +309,27 @@ def test_type_table_and_spec_files_match() -> None:
     existing = {path.name for path in (skill_dir / "specs").glob("*/*.md")}
     assert named - existing == set(), "SKILL.md names specs that do not exist"
     assert existing - named == set(), "spec files missing from the type table in SKILL.md"
+
+
+@needs_plantuml
+def test_plantuml_without_start_tag_fails(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """PlantUML exits 0 for a fragment without @startuml but writes no image."""
+    diagram = tmp_path / "fragment.puml"
+    diagram.write_text("A ||--o{ B\n", encoding="utf-8")
+    assert render.main([str(diagram)]) == 1
+    assert "@startuml" in capsys.readouterr().out
+
+
+@needs_plantuml
+def test_plantuml_theme_does_not_lower_png_resolution(tmp_path: Path) -> None:
+    """Themes such as spacelab set their own dpi; the PNG must still use the target DPI."""
+    body = "class A\nclass B\nA --> B\n"
+    plain = tmp_path / "plain.puml"
+    plain.write_text(f"@startuml\n{body}@enduml\n", encoding="utf-8")
+    themed = tmp_path / "themed.puml"
+    themed.write_text(f"@startuml\n!theme spacelab\n{body}@enduml\n", encoding="utf-8")
+    assert render.main([str(plain), str(themed)]) == 0
+    assert _png_size(themed.with_suffix(".png"))[1] > 0.5 * _png_size(plain.with_suffix(".png"))[1]
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "plain.png", "plain.puml", "plain.svg", "themed.png", "themed.puml", "themed.svg",
+    ]

@@ -1,0 +1,12 @@
+block
+  columns 3
+  client["Client"]
+  block:services:2
+    columns 2
+    api["API"] worker["Worker"]
+  end
+  space:3
+  db[("Database")]:3
+  client --> api
+  api -- "SQL" --> db
+  style services fill:#eef,stroke:#669

@@ -1,0 +1,15 @@
+railroad-beta
+assignment = sequence(
+    nonterminal("variable name"),
+    terminal("="),
+    choice(nonterminal("number"), nonterminal("quoted string")),
+    optional(terminal(";"))
+) ;
+arguments = sequence(
+    terminal("("),
+    optional(sequence(
+        nonterminal("expression"),
+        zeroOrMore(sequence(terminal(","), nonterminal("expression")))
+    )),
+    terminal(")")
+) ;

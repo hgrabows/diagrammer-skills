@@ -1,0 +1,20 @@
+swimlane-beta LR
+  subgraph emp [Employee]
+    request([Request leave])
+    informed([Get decision])
+  end
+  subgraph mgr [Manager]
+    review{Approve?}
+  end
+  subgraph hr [HR system]
+    balance[Check leave balance]
+    record[(Record absence)]
+    notify[Send notification]
+  end
+
+  request --> balance
+  balance -->|Enough days| review
+  review -->|Yes| record
+  record --> notify
+  review -->|No| notify
+  notify --> informed

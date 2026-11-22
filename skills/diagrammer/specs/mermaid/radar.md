@@ -2,7 +2,7 @@
 
 ## Summary
 
-A **Radar diagram** (also known as a radar chart, spider chart, star chart, cobweb chart, polar chart, or Kiviat diagram) is a way to plot low-dimensional data in a circular format. It is useful for graphically summarizing and comparing the performance of multiple entities across multiple dimensions.
+A **Radar diagram** (also known as a radar chart, spider chart, star chart, cobweb chart, polar chart, or Kiviat diagram) plots a few data series over several axes that radiate from a common centre. It is useful for comparing the profiles of a small number of entities across the same dimensions.
 
 **Use Cases:**
 - Comparing multiple entities (e.g., people, products, teams) across several quantitative attributes
@@ -10,32 +10,48 @@ A **Radar diagram** (also known as a radar chart, spider chart, star chart, cobw
 - Summarizing multi-dimensional data in a compact, visual way
 
 **When to Use:**
-- When you want to compare several items across the same set of variables
-- When you need to show strengths and weaknesses in a visual, circular format
+- When you want to compare 2-4 items across the same 3-12 variables
+- When the overall shape (strengths and weaknesses) matters more than exact numbers: the chart draws **no scale numbers**
 
 ---
 
 ## Syntax Description
 
-- Start with the `radar-beta` keyword.
-- Define axes using the `axis` keyword, with optional IDs and labels.
-- Define data series (curves) using the `curve` keyword, with an ID, optional label, and a list of values.
-- Optionally set `title`, `max`, `min`, `graticule`, `ticks`, and `showLegend`.
-- Curves can use ordered values or key-value pairs for axis mapping.
+- Start with the `radar-beta` keyword. Plain `radar` is not recognised ("No diagram type detected").
+- `title Some text` (optional). Write it unquoted; quotes would be printed. A front-matter `title:` also works; the `title` line wins if both exist.
+- `axis id["Label"], id2["Label 2"]` defines axes, clockwise starting at the top. The label is optional (`axis A, B, C`); several `axis` lines are allowed.
+- `curve id["Label"]{v1, v2, ...}` defines a data series. Values are listed in axis order, or as `{ axisId: value, ... }` in any order. Several curves may share one line, separated by commas.
+- Options, each on its own line: `max <n>`, `min <n>`, `graticule circle|polygon`, `ticks <n>`, `showLegend true|false`.
+- Statements may appear in any order; `%%` comments are allowed on their own line or at the end of a line.
 
-**Basic Syntax:**
-```
+```text
 radar-beta
-axis A, B, C, D, E
-curve c1{1,2,3,4,5}
-curve c2{5,4,3,2,1}
+  title <title>
+  axis <id>["<label>"], <id>["<label>"], <id>["<label>"]
+  curve <id>["<legend label>"]{<v1>, <v2>, <v3>}
+  curve <id>["<legend label>"]{ <axisId>: <v>, <axisId>: <v>, <axisId>: <v> }
+  max <number>
+  min <number>
+  graticule polygon
+  ticks <number>
+  showLegend false
 ```
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `max` | largest value in the data | Value at the outer ring |
+| `min` | 0 | Value at the centre |
+| `graticule` | `circle` | `circle`: round grid, curves are smoothed. `polygon`: straight grid, curves are straight-edged polygons |
+| `ticks` | 5 | Number of grid rings |
+| `showLegend` | `true` | Only `true` or `false` are accepted |
+
+**IDs** (axes and curves) must start with an ASCII letter and may contain letters, digits, `_` and `-`. Umlauts or a leading digit are syntax errors; put such text into the `["label"]`. Labels may contain spaces, umlauts and punctuation such as `: ( ) / , % &`.
 
 ---
 
 ## Examples
 
-### Grades Example
+### Grades (round grid)
 
 ```mermaid
 ---
@@ -50,72 +66,118 @@ radar-beta
   min 0
 ```
 
-### Restaurant Comparison
+With the default `graticule circle` the curves are smoothed and bulge between the axes; only the crossing points on the axes are data.
 
-```mermaid
-radar-beta
-  title Restaurant Comparison
-  axis food["Food Quality"], service["Service"], price["Price"]
-  axis ambiance["Ambiance"]
-  curve a["Restaurant A"]{4, 3, 2, 4}
-  curve b["Restaurant B"]{3, 4, 3, 3}
-  curve c["Restaurant C"]{2, 3, 4, 2}
-  curve d["Restaurant D"]{2, 2, 4, 3}
-  graticule polygon
-  max 5
-```
-
-### Advanced Syntax
-
-```mermaid
-radar-beta
-  axis axis1, axis2, axis3
-  curve id1["Label1"]{1, 2, 3}
-  curve id2["Label2"]{4, 5, 6}, id3{7, 8, 9}
-  curve id4{ axis3: 30, axis1: 20, axis2: 10 }
-  showLegend true
-  max 100
-  min 0
-  graticule circle
-  ticks 5
-```
-
-### Theme and Configuration Example
+### Restaurant Comparison (polygon grid, room for side labels)
 
 ```mermaid
 ---
 config:
   radar:
-    axisScaleFactor: 0.25
-    curveTension: 0.1
-  theme: base
-  themeVariables:
-    cScale0: "#FF0000"
-    cScale1: "#00FF00"
-    cScale2: "#0000FF"
-    radar:
-      curveOpacity: 0
+    marginLeft: 90
+    marginRight: 90
 ---
 radar-beta
-  axis A, B, C, D, E
-  curve c1{1,2,3,4,5}
-  curve c2{5,4,3,2,1}
-  curve c3{3,3,3,3,3}
+  title Restaurant Comparison (1 = poor, 5 = excellent)
+  axis food["Food Quality"], service["Service"], price["Price"]
+  axis ambiance["Ambiance"]
+  curve a["Bistro"]{4, 3, 2, 5}
+  curve b["Diner"]{3, 5, 4, 2}
+  curve c["Food truck"]{5, 2, 5, 1}
+  graticule polygon
+  max 5
 ```
+
+Axis labels on the left and right side grow outward from the axis end. With the default margins a label on a horizontal axis (here `Service` and `Ambiance`) has only about 30 px and is cut off after roughly 5 characters; labels on slanted axes get a little more. The margins above fix that. Since no numbers are drawn, the scale is stated in the title.
+
+### Key-value curves, several curves per line, options
+
+```mermaid
+---
+config:
+  radar:
+    marginLeft: 100
+    marginRight: 100
+---
+radar-beta
+  title Cloud provider fit (0-10)
+  axis cost["Cost"], perf["Performance"], sup["Support"], eco["Ecosystem"], sec["Security"]
+  curve a["Vendor A"]{7, 9, 5, 8, 6}, b["Vendor B"]{9, 5, 7, 4, 8}
+  curve c["Vendor C"]{ sec: 9, cost: 4, eco: 6, perf: 7, sup: 9 }
+  max 10
+  min 0
+  graticule polygon
+  ticks 5
+  showLegend true
+```
+
+A key-value curve must name **every** axis, otherwise rendering fails with `Missing entry for axis ...`.
+
+### Colours and line style
+
+```mermaid
+---
+config:
+  radar:
+    curveTension: 0
+    marginLeft: 90
+    marginRight: 90
+  themeVariables:
+    cScale0: "#d62728"
+    cScale1: "#1f77b4"
+    cScale2: "#2ca02c"
+    radar:
+      curveOpacity: 0.15
+      curveStrokeWidth: 3
+---
+radar-beta
+  title Sprint health per team
+  axis A["Velocity"], B["Quality"], C["Morale"], D["Focus"], E["Delivery"]
+  curve c1["Team Red"]{4, 2, 3, 5, 3}
+  curve c2["Team Blue"]{2, 5, 4, 3, 4}
+  curve c3["Team Green"]{3, 3, 5, 2, 5}
+  max 5
+```
+
+`curveTension: 0` gives straight edges on a round grid. A low `curveOpacity` with a thicker stroke keeps overlapping curves readable.
 
 ---
 
-## Tips
+## Configuration
 
-- Use `axis` to define each dimension; you can provide labels for clarity.
-- Use `curve` for each entity or data series.
-- Use `max` and `min` to control the scale.
-- Use `graticule` to choose between circular or polygonal grid lines.
-- Use the configuration block to customize appearance and theme.
+Under `config: radar:` (verified: `width`, `height`, the four margins, `curveTension`):
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `width`, `height` | 600 | Size of the plot area; the image is this plus the margins |
+| `marginTop`, `marginBottom`, `marginLeft`, `marginRight` | 50 | Space around the plot for title, axis labels and legend |
+| `axisLabelFactor` | 1.05 | Distance of axis labels from the centre, relative to the radius |
+| `curveTension` | 0.17 | Rounding of curves with `graticule circle`; 0 = straight |
+| `axisScaleFactor` | 1 | Scales only the axis lines, not grid or curves; leave at 1 |
+
+Under `config: themeVariables:`: `cScale0`, `cScale1`, ... set the colour of the 1st, 2nd, ... curve (quoted hex). They work with the default theme; `theme: base` is not required.
+
+Under `config: themeVariables: radar:` (all verified): `axisColor`, `axisStrokeWidth`, `axisLabelFontSize` (default `12px`), `curveOpacity` (0.7), `curveStrokeWidth` (2), `graticuleColor`, `graticuleOpacity`, `graticuleStrokeWidth`, `legendBoxSize`, `legendFontSize`.
+
+---
+
+## Rules and Pitfalls
+
+- **Count the values.** A curve whose number of values differs from the number of axes still renders without an error, but the curve is silently missing; only its legend entry appears.
+- Negative values are a syntax error. Values above `max` are drawn on the outer ring, values below `min` at the centre, so set `max`/`min` to cover the data.
+- Choose `max` to match the data. With `max 100` and values below 10 all curves collapse into a dot at the centre. Without `max` the largest value touches the outer ring.
+- There are no tick labels or value labels. Put the scale into the title or the axis labels (`"Cost (0-10)"`).
+- Legend labels longer than about 11 characters are cut off at the right edge. Larger `marginRight` hardly helps (4 px of margin yield 1 px for the legend), so keep legend labels short.
+- Axis labels on the left and right are cut off after about 5-8 characters with default margins (`Service`, `Performance` and `Delivery` were all clipped in tests). Whenever a side label is longer than 5 characters set `marginLeft`/`marginRight` to roughly 7 px per character plus 20. Larger label or legend fonts need more. Labels are not wrapped and `<br/>` is printed literally.
+- Use at most 3-4 curves. With the default theme, fills are semi-opaque and more curves blend into one blob whose colours can no longer be told apart; with 6 or more curves the legend also grows into the chart. If more are needed, lower `curveOpacity`.
+- Use at least 3 axes; with 2 axes every curve degenerates into a line.
+- `showLegend` takes only `true`/`false`, `graticule` only `circle`/`polygon`.
+- The title sits flush at the top edge of the image, directly above the top axis label; keep it to one short line.
+- The diagram is still beta (`radar-beta`); the syntax may change in later Mermaid versions.
 
 ---
 
 ## References
 
 - [Official Mermaid Radar Diagram Documentation](https://mermaid.js.org/syntax/radar.html)
-- [Mermaid.js Documentation](https://mermaid.js.org/)
+- [Radar configuration schema](https://mermaid.js.org/config/schema-docs/config-defs-radar-diagram-config.html)

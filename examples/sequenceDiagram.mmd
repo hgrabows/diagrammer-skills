@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant Client
+    participant Server
+    Client->>Server: Start job
+    create participant Worker
+    Server->>Worker: Spawn
+    Worker-->>Server: Result
+    destroy Worker
+    Server-xWorker: Terminate
+    Server-->>Client: Job finished

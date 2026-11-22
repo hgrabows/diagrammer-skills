@@ -39,6 +39,7 @@ def _extract_mermaid_code(content: str) -> Optional[str]:
 
 DEFAULT_SCREEN_DPI = 96.0
 DEFAULT_PNG_DPI = 600
+PAGE_WIDTH_PX = 784  # usable width of the CLI's 800 px page (8 px body margin each side)
 STACK_FRAME_PATTERN = re.compile(r"^\s*at\s|\((?:/|file://|https?://)[^)]*:\d+:\d+\)\s*$")
 ERROR_SVG_MARKER = 'aria-roledescription="error"'
 
@@ -58,14 +59,21 @@ def _resolve_target_png_dpi() -> int:
 def _build_png_size_args(target_dpi: int, svg_size: SvgSize) -> List[str]:
     """Build the CLI args that set the PNG resolution (needs Mermaid CLI 12 or newer).
 
-    `--size` gives the PNG's longest side in pixels. It is the diagram's size at the target
-    DPI, capped so that a large diagram gets a lower resolution instead of a huge image.
-    Without a known SVG size the whole-number `--scale` factor is the fallback.
+    Diagrams that fit the CLI's 800 px page are enlarged with the whole-number `--scale`
+    factor, which keeps their layout. `--size` cannot be used for them: it widens the page,
+    and diagrams that fill the page width (Gantt) are then laid out wider instead of being
+    enlarged. Wider diagrams would be shrunk to the page by `--scale`, so they get `--size`,
+    the PNG's longest side in pixels. Both are capped so that a large diagram gets a lower
+    resolution instead of a huge image.
     """
-    if not svg_size:
-        return ["--scale", str(max(int(target_dpi / DEFAULT_SCREEN_DPI), 1))]
+    limit = max_png_side()
+    if not svg_size or svg_size[0] <= PAGE_WIDTH_PX:
+        scale = max(int(target_dpi / DEFAULT_SCREEN_DPI), 1)
+        if svg_size:
+            scale = max(1, min(scale, int(limit / max(svg_size))))
+        return ["--scale", str(scale)]
     wanted = math.ceil(max(svg_size) * target_dpi / DEFAULT_SCREEN_DPI)
-    return ["--size", str(max(1, min(wanted, max_png_side())))]
+    return ["--size", str(max(1, min(wanted, limit)))]
 
 
 def _run_mmdc(

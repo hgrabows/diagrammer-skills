@@ -1,0 +1,13 @@
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#4c78a8, #f58518, #54a24b"
+---
+xychart
+    title "Response Time by Release"
+    x-axis ["v1.0", "v1.1", "v1.2", "v2.0"]
+    y-axis "Milliseconds" 0 --> 400
+    bar "p95" [320, 290, 240, 180]
+    line "median" [120, 110, 95, 70]
+    line "target" [150, 150, 150, 150]

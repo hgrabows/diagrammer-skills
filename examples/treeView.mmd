@@ -1,0 +1,21 @@
+---
+config:
+  treeView:
+    rowIndent: 30
+    lineThickness: 2
+  themeVariables:
+    treeView:
+      labelFontSize: '18px'
+      labelColor: '#1f3a5f'
+      lineColor: '#888888'
+      descriptionColor: '#b00020'
+---
+treeView-beta
+  service/
+    app/
+      main.py ## FastAPI app
+      routes/
+        users.py
+        orders.py
+    Dockerfile
+    pyproject.toml

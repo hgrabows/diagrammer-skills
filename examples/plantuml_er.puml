@@ -1,0 +1,54 @@
+@startuml
+left to right direction
+hide circle
+
+' === Student ===
+class Student {
+    --
+    matriculation_no (PK)
+    --
+    study_program
+    last_name
+    first_name
+    street
+    city
+    country
+    enrollment_date
+    degree
+}
+
+' === Participation (Join Table) ===
+class Participation {
+    --
+    matriculation_no (FK)
+    room_no (FK)
+    time (FK)
+    weekday (FK)
+    --
+    date_of_attended_lesson
+    completed_assignment
+}
+
+' === Course ===
+class Course {
+    --
+    room_no (PK)
+    time (PK)
+    weekday (PK)
+    --
+    professor_code
+    subject_code
+    assistant_code
+    course_type
+    semester
+}
+
+' === Relationships ===
+Student ||--o{ Participation : "participates_in"
+Course   ||--o{ Participation : "is_attended_in"
+
+' --- Layout helper: keep everything in one line ---
+Student -[hidden]-> Participation
+Participation -[hidden]-> Course
+
+@enduml

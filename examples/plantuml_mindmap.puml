@@ -1,0 +1,32 @@
+@startmindmap
+<style>
+mindmapDiagram {
+  node {
+    BackgroundColor lightgray
+    FontColor black
+    FontSize 14
+    MaximumWidth 160
+  }
+  rootNode {
+    BackgroundColor gold
+  }
+  :depth(1) {
+    BackgroundColor lightblue
+  }
+  leafNode {
+    LineColor green
+  }
+  arrow {
+    LineColor gray
+  }
+  .risk {
+    BackgroundColor pink
+  }
+}
+</style>
+* Styled Mindmap
+** Node A
+*** A long leaf text that is wrapped because of MaximumWidth
+*** Open issue <<risk>>
+** Node B
+@endmindmap

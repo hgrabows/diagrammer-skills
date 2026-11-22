@@ -1,0 +1,23 @@
+---
+config:
+  gitGraph:
+    mainBranchName: trunk
+---
+gitGraph
+   commit id: "init"
+   branch develop
+   commit id: "setup"
+   branch feature/login
+   commit id: "form"
+   commit id: "auth"
+   checkout develop
+   merge feature/login id: "login"
+   checkout trunk
+   branch hotfix
+   commit id: "patch" type: REVERSE
+   checkout trunk
+   merge hotfix id: "v1.0.1" tag: "v1.0.1"
+   checkout develop
+   merge trunk id: "sync"
+   checkout trunk
+   merge develop id: "v1.1.0" tag: "v1.1.0"

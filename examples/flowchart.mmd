@@ -1,0 +1,15 @@
+flowchart LR
+    subgraph input [Input Phase]
+        A[User Input] --> B[Validation]
+    end
+
+    subgraph processing [Processing Phase]
+        C[Process Data] --> D[Transform]
+    end
+
+    subgraph output [Output Phase]
+        E[Generate Report] --> F[Display Results]
+    end
+
+    input --> processing
+    processing --> output

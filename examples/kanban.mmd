@@ -1,0 +1,24 @@
+---
+config:
+  kanban:
+    ticketBaseUrl: 'https://example.atlassian.net/browse/#TICKET#'
+    sectionWidth: 240
+---
+kanban
+  backlog[Backlog]
+    b1[Research competitor pricing]
+    b2["Evaluate hosting options (EU only)"]
+  todo[Todo]
+    t1[Write technical specification]@{ assigned: 'Anna', priority: 'High' }
+    t2[Set up CI pipeline]@{ ticket: 'PRJ-14', assigned: 'Ben' }
+  doing[In progress]
+    d1[Implement the renderer so that it works in all supported browsers and on mobile]@{ ticket: 'PRJ-9', assigned: 'Carla', priority: 'Very High' }
+  review[Review]
+    r1[API design]@{
+      ticket: 'PRJ-12'
+      assigned: 'Ben'
+      priority: 'Low'
+    }
+  done[Done]
+    x1[Project kickoff]
+    x2[Define scope]@{ ticket: 'PRJ-1' }
