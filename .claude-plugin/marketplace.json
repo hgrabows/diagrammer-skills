@@ -1,6 +1,6 @@
 {
   "name": "diagrammer-skills",
-  "description": "Skills für Claude Code rund um Diagramme",
+  "description": "Claude Code skills for diagrams",
   "owner": {
     "name": "hgrabows"
   },
@@ -8,7 +8,7 @@
     {
       "name": "diagrammer",
       "source": "./",
-      "description": "Erzeugt Mermaid- und PlantUML-Diagramme eines ausdrücklich genannten Typs und rendert sie zu SVG und PNG."
+      "description": "Creates Mermaid and PlantUML diagrams of an explicitly named type and renders them to SVG and PNG."
     }
   ]
 }

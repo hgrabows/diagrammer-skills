@@ -1,6 +1,6 @@
 {
   "name": "diagrammer",
-  "description": "Erzeugt Mermaid- und PlantUML-Diagramme eines ausdrücklich genannten Typs, prüft sie mit dem echten Renderer und legt Quelldatei, SVG und PNG ab.",
+  "description": "Creates Mermaid and PlantUML diagrams of an explicitly named type, validates them with the real renderer and saves source, SVG and PNG.",
   "author": {
     "name": "hgrabows"
   }

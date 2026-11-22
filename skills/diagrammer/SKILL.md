@@ -1,136 +1,135 @@
 ---
 name: diagrammer
-description: Erzeugt ein Mermaid- oder PlantUML-Diagramm eines ausdrücklich genannten Typs (ER-Diagramm, Sequenzdiagramm, Flowchart, Klassendiagramm, Zustandsdiagramm, Mindmap, Gantt, C4 und weitere) aus einem Text, einer Datei oder dem aktuellen Projekt, prüft es mit dem echten Renderer und legt die Quelldatei samt SVG und PNG ab. Verwenden, wenn der Nutzer /diagrammer aufruft oder eine gerenderte Diagrammdatei (Mermaid, PlantUML, SVG, PNG) haben möchte.
-argument-hint: "<typ> [mermaid|plantuml] [quelle oder anweisung]"
+description: Creates a Mermaid or PlantUML diagram of an explicitly named type (ER diagram, sequence diagram, flowchart, class diagram, state diagram, mindmap, Gantt, C4 and more) from a text, a file or the current project, validates it with the real renderer and saves the source file together with an SVG and a PNG. Use when the user invokes /diagrammer or wants a rendered diagram file (Mermaid, PlantUML, SVG, PNG).
+argument-hint: "<type> [mermaid|plantuml] [source or instruction]"
 ---
 
 # Diagrammer
 
-Erzeuge genau ein Diagramm des genannten Typs, prüfe es mit dem echten Renderer und liefere
-Quelldatei, SVG und PNG.
+Create exactly one diagram of the named type, validate it with the real renderer and deliver
+the source file, an SVG and a PNG.
 
-Argumente dieses Aufrufs: `$ARGUMENTS`
+Arguments of this call: `$ARGUMENTS`
 
-Beispiele:
+Examples:
 
-- `/diagrammer er-diagramm` – ER-Diagramm aus dem, worüber gerade gesprochen wird
-- `/diagrammer er plantuml docs/datenmodell.md` – PlantUML-Variante aus einer Datei
-- `/diagrammer sequenz Login-Ablauf zwischen Browser, API und Datenbank`
+- `/diagrammer er` – ER diagram of whatever the conversation is currently about
+- `/diagrammer er plantuml docs/data-model.md` – PlantUML variant from a file
+- `/diagrammer sequence login flow between browser, API and database`
 
-Pfade in dieser Anleitung sind relativ zum Verzeichnis dieses Skills: `${CLAUDE_SKILL_DIR}`
-(das „Base directory“, das beim Laden genannt wird).
+Paths in these instructions are relative to this skill's directory: `${CLAUDE_SKILL_DIR}`
+(the "Base directory" named when the skill is loaded).
 
-## Ablauf
+Talk to the user in the language they write in.
 
-1. **Typ bestimmen.** Ordne das erste Argument sinngemäß einer Zeile der Tabelle unten zu
-   (`ER-Diagramm`, `Zustandsdiagramm` und `sequence diagram` sind eindeutig, auch wenn sie
-   nicht wörtlich dastehen). Der Nutzer wählt den Typ bewusst selbst, deshalb gibt es keine
-   automatische Typwahl: Ist das erste Argument kein Typ (etwa nur ein Dateipfad), passt es
-   zu keiner Zeile oder zu zwei Zeilen gleich gut, dann nenne die verfügbaren Typen kompakt
-   (ein Stichwort pro Typ) und frage nach. Lies dafür nicht die Quelle, um selbst einen Typ
-   vorzuschlagen. Steht `plantuml` oder `mermaid` dabei, gilt diese Engine; sonst Mermaid.
+## Steps
 
-2. **Quelle bestimmen.** Der Rest der Argumente ist entweder ein Dateipfad (dann lesen), ein
-   Text oder eine Anweisung. Ohne weitere Argumente ist die Quelle das, worum es im Gespräch
-   gerade geht, oder das aktuelle Projekt (z. B. Tabellen für ein ER-Diagramm, Code für ein
-   Sequenzdiagramm). Ist nicht erkennbar, was dargestellt werden soll, frage kurz nach.
+1. **Determine the type.** Match the first argument by meaning to one row of the table below
+   (`ER diagram`, `state machine` and `Sequenzdiagramm` are unambiguous even if they are not
+   listed literally). The user picks the type deliberately, so there is no automatic type
+   selection: if the first argument is not a type (for example only a file path), matches no
+   row, or matches two rows equally well, list the available types compactly (one keyword
+   per type) and ask. Do not read the source in order to suggest a type yourself. If
+   `plantuml` or `mermaid` is given, use that engine; otherwise Mermaid.
 
-3. **Spezifikation lesen.** Lies genau die eine Datei aus der Tabelle, also
-   `specs/mermaid/<datei>` oder `specs/plantuml/<datei>`. Sie beschreibt die Syntax, die der
-   installierte Renderer annimmt. Halte dich daran statt an die Erinnerung, denn gerade die
-   neueren Mermaid-Typen ändern ihre Syntax zwischen Versionen.
+2. **Determine the source.** The rest of the arguments is a file path (read it), a text or an
+   instruction. Without further arguments the source is what the conversation is currently
+   about, or the current project (for example tables for an ER diagram, code for a sequence
+   diagram). If it is not clear what should be shown, ask briefly.
 
-4. **Stilvorgaben lesen, falls vorhanden.** `flavours/general.txt` gilt für alle Diagramme,
-   `flavours/<name der spec ohne .md>.txt` für den jeweiligen Typ (Beispiel:
-   `flavours/stateDiagram.txt`). Die typspezifische Vorgabe geht vor der allgemeinen; keine
-   von beiden darf der Spezifikation widersprechen. Fehlt eine Datei, gibt es keine Vorgabe.
+3. **Read the spec.** Read exactly the one file from the table, that is
+   `specs/mermaid/<file>` or `specs/plantuml/<file>`. It describes the syntax the installed
+   renderer accepts. Follow it rather than memory, because the newer Mermaid types in
+   particular change their syntax between versions.
 
-5. **Diagramm schreiben.** Formuliere zuerst für dich die Kernaussage der Quelle in ein bis
-   zwei Sätzen und richte das Diagramm daran aus: lieber das Wesentliche klar als alles
-   vollständig. Beschrifte in der Sprache der Quelle; ist die nicht eindeutig (etwa bei SQL
-   oder Code), in der Sprache, in der der Nutzer schreibt. Namen aus der Quelle (Tabellen,
-   Spalten, Klassen, Funktionen) bleiben unverändert.
-   Speichere als `diagrams/<thema>_<typ>.mmd` (Mermaid) oder `.puml` (PlantUML) im aktuellen
-   Arbeitsverzeichnis, außer der Nutzer nennt einen anderen Ort. `<thema>` ist ein kurzes
-   Stichwort in Kleinbuchstaben, `<typ>` das erste Stichwort der Tabellenzeile, zum Beispiel
-   `bibliothek_er.puml` oder `login_sequenz.mmd`. Die Datei enthält nur den Diagrammcode,
-   ohne Markdown-Zäune. Überschreibe kein vorhandenes anderes Diagramm; wähle dann einen
-   anderen Namen.
+4. **Read style rules, if present.** `flavours/general.txt` applies to all diagrams,
+   `flavours/<spec name without .md>.txt` to the respective type (example:
+   `flavours/stateDiagram.txt`). The type-specific rule overrides the general one; neither
+   may contradict the spec. A missing file means there is no rule.
 
-6. **Rendern und prüfen.**
+5. **Write the diagram.** First state the core message of the source for yourself in one or
+   two sentences and build the diagram around it: better the essentials clearly than
+   everything completely. Label in the language of the source; if that is not clear (as with
+   SQL or code), in the language the user writes in. Names from the source (tables, columns,
+   classes, functions) stay unchanged.
+   Save as `diagrams/<topic>_<type>.mmd` (Mermaid) or `.puml` (PlantUML) in the current
+   working directory unless the user names another place. `<topic>` is a short lowercase
+   keyword, `<type>` the first keyword of the table row, for example `library_er.puml` or
+   `login_sequence.mmd`. The file contains only the diagram code, no Markdown fences. Do not
+   overwrite an existing different diagram; choose another name instead.
+
+6. **Render and validate.**
 
    ```bash
-   python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" <pfad zur diagrammdatei>
+   python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" <path to the diagram file>
    ```
 
-   `OK` bedeutet: Syntax gültig, SVG und PNG liegen neben der Quelldatei. `FAIL` liefert die
-   Fehlermeldung des Renderers, meist mit Zeilennummer; SVG und PNG gibt es dann nicht.
+   `OK` means: syntax valid, SVG and PNG are next to the source file. `FAIL` gives the
+   renderer's error message, usually with a line number; there is no SVG or PNG then.
 
-7. **Bei `FAIL` korrigieren.** Ordne die Meldung der betroffenen Zeile zu, vergleiche mit der
-   Spezifikation, ändere die Stelle und rendere erneut. Gib nicht dieselbe Fassung noch
-   einmal ab. Schlägt auch die dritte Korrektur fehl, melde das offen mit der letzten
-   Fehlermeldung. Ein Diagramm gilt erst als fertig, wenn `render.py` `OK` gemeldet hat.
+7. **Fix on `FAIL`.** Map the message to the affected line, compare with the spec, change
+   that place and render again. Do not submit the same version twice. If the third fix fails
+   as well, report that openly with the last error message. A diagram only counts as done
+   once `render.py` has reported `OK`.
 
-8. **Bild ansehen.** `OK` heißt nur, dass die Syntax stimmt, nicht, dass das Bild das
-   Gemeinte zeigt. Öffne das PNG und prüfe: Stimmen Elemente und Verbindungen mit der Quelle
-   überein, gibt es verwaiste oder unbeabsichtigte Knoten, überlappen Beschriftungen, wird
-   etwas von Linien verdeckt? Das PNG ist hochaufgelöst und wird beim Ansehen verkleinert;
-   wirkt eine Stelle eng, kürze dort die Beschriftung oder entzerre das Layout. Bessere
-   höchstens zweimal nach und rendere jeweils neu.
+8. **Look at the image.** `OK` only means the syntax is valid, not that the image shows what
+   was meant. Open the PNG and check: do elements and connections match the source, are
+   there orphaned or unintended nodes, do labels overlap, is anything hidden by lines? The
+   PNG is high resolution and is scaled down when viewed; if a spot looks cramped, shorten
+   the label there or loosen the layout. Improve at most twice and render again each time.
 
-9. **Ergebnis melden.** Nenne die Pfade von Quelldatei, SVG und PNG und in einem Satz, was
-   das Diagramm zeigt. Mehr braucht es nicht.
+9. **Report the result.** Give the paths of source file, SVG and PNG and say in one sentence
+   what the diagram shows. Nothing more is needed.
 
-## Änderungen an einem vorhandenen Diagramm
+## Changing an existing diagram
 
-Wünscht der Nutzer Änderungen („mach die Pfeile beschriftet“, „füge die Tabelle Rechnung
-hinzu“), bearbeite die bestehende Quelldatei und wiederhole die Schritte 6 bis 9. Die
-Spezifikation des Typs gilt weiter.
+If the user asks for changes ("label the arrows", "add the table Invoice"), edit the existing
+source file and repeat steps 6 to 9. The spec of the type still applies.
 
-## Typen
+## Types
 
-Standard ist Mermaid. ER-Diagramm, Klassendiagramm und Mindmap gibt es zusätzlich als
-PlantUML-Variante; sie wird nur mit dem Zusatz `plantuml` verwendet. Die Stichwörter sind
-Erkennungshilfen, keine feste Schreibweise: Bindestriche, Groß- und Kleinschreibung und
-Zusätze wie „-diagramm“ spielen keine Rolle.
+Mermaid is the default. ER diagram, class diagram and mindmap also exist as a PlantUML
+variant; it is used only with the addition `plantuml`. The keywords are recognition aids in
+English and German, not a fixed spelling: hyphens, upper and lower case and additions such as
+"diagram" or "-diagramm" do not matter.
 
-| Der Nutzer sagt | Mermaid (`specs/mermaid/`) | PlantUML (`specs/plantuml/`) |
+| The user says | Mermaid (`specs/mermaid/`) | PlantUML (`specs/plantuml/`) |
 | --- | --- | --- |
-| er, erd, entity-relationship, datenmodell | `entityRelationshipDiagram.md` | `plantuml_er.md` |
-| klasse, klassen, class | `classDiagram.md` | `plantuml_class.md` |
+| er, erd, entity-relationship, data model, datenmodell | `entityRelationshipDiagram.md` | `plantuml_er.md` |
+| class, classes, klasse, klassen | `classDiagram.md` | `plantuml_class.md` |
 | mindmap | `mindmap.md` | `plantuml_mindmap.md` |
-| sequenz, sequence, interaktion, nachrichten | `sequenceDiagram.md` | – |
-| flowchart, fluss, ablauf, prozess | `flowchart.md` | – |
-| zustand, zustands, state, zustandsautomat | `stateDiagram.md` | – |
-| gantt, zeitplan, projektplan | `gantt.md` | – |
-| timeline, zeitstrahl, chronologie | `timeline.md` | – |
-| architektur, architecture | `architectureDiagram.md` | – |
+| sequence, interaction, messages, sequenz, nachrichten | `sequenceDiagram.md` | – |
+| flowchart, flow, process, fluss, ablauf, prozess | `flowchart.md` | – |
+| state, state machine, zustand, zustandsautomat | `stateDiagram.md` | – |
+| gantt, schedule, project plan, zeitplan, projektplan | `gantt.md` | – |
+| timeline, chronology, zeitstrahl, chronologie | `timeline.md` | – |
+| architecture, architektur | `architectureDiagram.md` | – |
 | c4 | `c4Diagram.md` | – |
 | block | `blockDiagram.md` | – |
 | git, gitgraph, branches | `gitGraph.md` | – |
 | kanban | `kanban.md` | – |
-| journey, user-journey, nutzerreise | `userJourney.md` | – |
+| journey, user journey, nutzerreise | `userJourney.md` | – |
 | requirement, anforderung | `requirementDiagram.md` | – |
 | pie, torte, kreis | `pieChart.md` | – |
-| xy, xychart, linie, balken | `xyChart.md` | – |
+| xy, xychart, line, bar, linie, balken | `xyChart.md` | – |
 | quadrant | `quadrantChart.md` | – |
-| radar, netz, spinnennetz | `radar.md` | – |
+| radar, spider, netz, spinnennetz | `radar.md` | – |
 | sankey, mengenfluss | `sankeyDiagram.md` | – |
 | treemap, kacheldiagramm | `treemap.md` | – |
-| packet, paket, protokollkopf | `packet.md` | – |
+| packet, protocol header, paket, protokollkopf | `packet.md` | – |
 | zenuml | `zenuml.md` | – |
 
-## Voraussetzungen
+## Requirements
 
-Mermaid braucht `node` und die Mermaid-CLI `mmdc`. PlantUML braucht das Kommando `plantuml`
-oder eine PlantUML-jar mit `java` (Umgebungsvariable `PLANTUML_JAR` oder eine jar im Ordner
-`vendor/`), für Klassen- und ER-Diagramme außerdem Graphviz (`dot`). Meldet `render.py`,
-dass ein Werkzeug fehlt, zeigt
+Mermaid needs `node` and the Mermaid CLI `mmdc`. PlantUML needs the `plantuml` command or a
+PlantUML jar with `java` (environment variable `PLANTUML_JAR` or a jar in the `vendor/`
+folder), and for class and ER diagrams also Graphviz (`dot`). If `render.py` reports that a
+tool is missing,
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" --check
 ```
 
-was fehlt und wie es installiert wird. Installiere nichts ungefragt: Nenne dem Nutzer das
-fehlende Werkzeug samt Installationsbefehl, statt ein ungeprüftes Diagramm als fertig
-auszugeben.
+shows what is missing and how to install it. Do not install anything unasked: tell the user
+the missing tool and its install command instead of presenting an unvalidated diagram as
+done.

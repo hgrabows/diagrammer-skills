@@ -1,81 +1,36 @@
-# Diagrammer-Skills
+# Diagrammer Skills
 
-Ein Skill für [Claude Code](https://claude.com/claude-code), der aus einem Text, einer Datei
-oder dem aktuellen Projekt ein Diagramm zeichnet. Du nennst den Diagrammtyp, Claude schreibt
-das Diagramm in Mermaid oder PlantUML, prüft es mit dem echten Renderer und legt die
-Quelldatei samt SVG und PNG ab.
-
-```text
-/diagrammer er-diagramm
-/diagrammer er plantuml docs/datenmodell.md
-/diagrammer sequenz Login-Ablauf zwischen Browser, API und Datenbank
-```
-
-Der Skill rät den Typ nicht. Fehlt er oder ist er mehrdeutig, fragt der Skill nach und zeigt
-die verfügbaren Typen.
-
-## Aufruf
+A skill for [Claude Code](https://claude.com/claude-code) that draws a diagram from a text, a
+file or the current project. You name the diagram type, Claude writes the diagram in Mermaid
+or PlantUML, validates it with the real renderer and saves the source file together with an
+SVG and a PNG.
 
 ```text
-/diagrammer <typ> [mermaid|plantuml] [quelle oder anweisung]
+/diagrammer:diagrammer er
+/diagrammer:diagrammer er plantuml docs/data-model.md
+/diagrammer:diagrammer sequence login flow between browser, API and database
 ```
 
-- **Typ:** ein Stichwort aus der Liste unten, deutsch oder englisch (`er`, `sequenz`,
-  `zustand`, `flowchart`, `class`, …).
-- **Engine:** Standard ist Mermaid. Mit dem Zusatz `plantuml` entsteht die PlantUML-Variante;
-  die gibt es für ER-Diagramm, Klassendiagramm und Mindmap.
-- **Quelle:** ein Dateipfad, ein Text oder eine Anweisung. Ohne Angabe nimmt der Skill das,
-  worüber gerade gesprochen wird, oder das aktuelle Projekt.
-
-Das Ergebnis liegt in `diagrams/` im aktuellen Ordner, zum Beispiel `bibliothek_er.puml`,
-`bibliothek_er.svg` und `bibliothek_er.png`.
-
-## Diagrammtypen
-
-| Engine | Typen |
-| --- | --- |
-| Mermaid | ER-Diagramm, Klassendiagramm, Mindmap, Sequenzdiagramm, Flowchart, Zustandsdiagramm, Gantt, Timeline, Architektur, C4, Block, GitGraph, Kanban, User Journey, Requirement, Pie, XY-Chart, Quadrant, Radar, Sankey, Treemap, Packet, ZenUML |
-| PlantUML | ER-Diagramm (eigene Schreibweise auf Basis des Klassendiagramms, ohne Datentypen), Klassendiagramm, Mindmap |
-
-Die Stichwörter zu jedem Typ stehen in [SKILL.md](skills/diagrammer/SKILL.md).
-
-## Voraussetzungen
-
-| Für | Wird gebraucht | Installation |
-| --- | --- | --- |
-| Mermaid | Node.js und die Mermaid-CLI `mmdc` | `npm install -g @mermaid-js/mermaid-cli` |
-| PlantUML | PlantUML und Graphviz | macOS: `brew install plantuml graphviz` |
-
-PlantUML wird nur für die drei PlantUML-Varianten gebraucht. Statt der Installation genügt
-auch eine PlantUML-jar von <https://plantuml.com/download> zusammen mit Java: Lege sie in
-`skills/diagrammer/vendor/` oder setze die Umgebungsvariable `PLANTUML_JAR` auf ihren Pfad.
-
-Was auf deinem Rechner vorhanden ist und was fehlt, zeigt:
-
-```bash
-python3 skills/diagrammer/scripts/render.py --check
-```
-
-Getestet unter macOS mit Mermaid-CLI 11.12 und PlantUML 1.2025.10.
+The skill does not guess the type. If it is missing or ambiguous, the skill asks and shows
+the available types.
 
 ## Installation
 
-### Über den Marketplace (empfohlen)
+### Via the marketplace (recommended)
 
-Gib in Claude Code diese beiden Befehle ein:
+Enter these two commands in Claude Code:
 
 ```text
 /plugin marketplace add hgrabows/diagrammer-skills
 /plugin install diagrammer@diagrammer-skills
 ```
 
-Der erste macht dieses Repository als Marketplace bekannt, der zweite installiert den Skill
-daraus. Der Befehl heißt dann `/diagrammer:diagrammer`, zum Beispiel
-`/diagrammer:diagrammer er-diagramm`.
+The first registers this repository as a marketplace, the second installs the skill from it.
+The command is then `/diagrammer:diagrammer`.
 
-### Alternative: klonen und verlinken
+### Alternative: clone and link
 
-Der Befehl heißt dann kurz `/diagrammer` und steht in jedem Projekt zur Verfügung:
+The command is then the short `/diagrammer`, available in every project:
 
 ```bash
 git clone https://github.com/hgrabows/diagrammer-skills.git
@@ -85,44 +40,87 @@ git clone https://github.com/hgrabows/diagrammer-skills.git
 mkdir -p ~/.claude/skills && ln -s "$PWD/diagrammer-skills/skills/diagrammer" ~/.claude/skills/diagrammer
 ```
 
-Soll der Skill nur in einem bestimmten Projekt gelten, verlinke ihn stattdessen in dessen
-Ordner `.claude/skills/`. Aktualisiert wird mit `git pull`.
+To use the skill in one project only, link it into that project's `.claude/skills/` folder
+instead. Update with `git pull`.
 
-## Anpassen
+## Usage
 
-- **Stilvorgaben:** Textdateien in [skills/diagrammer/flavours/](skills/diagrammer/flavours/).
-  `general.txt` gilt für alle Diagramme, `<name der spezifikation>.txt` für einen Typ, zum
-  Beispiel `stateDiagram.txt` oder `plantuml_class.txt`.
-- **Syntax:** je eine Spezifikation pro Typ in
-  [skills/diagrammer/specs/](skills/diagrammer/specs/). Pro Aufruf liest der Skill genau
-  eine davon.
-- **PNG-Auflösung:** Standard sind 600 dpi, bei großen Diagrammen weniger, damit die längste
-  Kante höchstens 8192 Pixel hat. Ändern lässt sich das über `MMDC_PNG_DPI`,
-  `PLANTUML_PNG_DPI` und `DIAGRAMMER_MAX_PNG_SIDE`.
+```text
+/diagrammer:diagrammer <type> [mermaid|plantuml] [source or instruction]
+```
 
-## Entwicklung
+- **Type:** a keyword from the list below, in English or German (`er`, `sequence`, `state`,
+  `flowchart`, `class`, …).
+- **Engine:** Mermaid is the default. Adding `plantuml` produces the PlantUML variant, which
+  exists for ER diagram, class diagram and mindmap.
+- **Source:** a file path, a text or an instruction. Without one, the skill uses what the
+  conversation is currently about, or the current project.
+
+The result is written to `diagrams/` in the current folder, for example `library_er.puml`,
+`library_er.svg` and `library_er.png`. Labels follow the language of the source.
+
+## Diagram types
+
+| Engine | Types |
+| --- | --- |
+| Mermaid | ER diagram, class diagram, mindmap, sequence diagram, flowchart, state diagram, Gantt, timeline, architecture, C4, block, GitGraph, Kanban, user journey, requirement, pie, XY chart, quadrant, radar, Sankey, treemap, packet, ZenUML |
+| PlantUML | ER diagram (a custom notation based on the class diagram, without data types), class diagram, mindmap |
+
+The keywords for each type are listed in [SKILL.md](skills/diagrammer/SKILL.md).
+
+## Requirements
+
+| For | Needed | Installation |
+| --- | --- | --- |
+| Mermaid | Node.js and the Mermaid CLI `mmdc` | `npm install -g @mermaid-js/mermaid-cli` |
+| PlantUML | PlantUML and Graphviz | macOS: `brew install plantuml graphviz` |
+
+PlantUML is only needed for the three PlantUML variants. Instead of installing it, a PlantUML
+jar from <https://plantuml.com/download> together with Java is enough: set the environment
+variable `PLANTUML_JAR` to its path (for Claude Code, for example under `env` in
+`~/.claude/settings.json`), or, in a cloned copy, put it into `skills/diagrammer/vendor/`.
+
+To see what is present on your machine and what is missing, run this in a cloned copy:
+
+```bash
+python3 skills/diagrammer/scripts/render.py --check
+```
+
+Tested on macOS with Mermaid CLI 11.12 and PlantUML 1.2025.10.
+
+## Customising
+
+- **Style rules:** text files in [skills/diagrammer/flavours/](skills/diagrammer/flavours/).
+  `general.txt` applies to all diagrams, `<spec name>.txt` to one type, for example
+  `stateDiagram.txt` or `plantuml_class.txt`.
+- **Syntax:** one spec per type in [skills/diagrammer/specs/](skills/diagrammer/specs/). The
+  skill reads exactly one of them per call.
+- **PNG resolution:** 600 dpi by default, less for large diagrams so that the longest side
+  stays within 8192 pixels. Change it with `MMDC_PNG_DPI`, `PLANTUML_PNG_DPI` and
+  `DIAGRAMMER_MAX_PNG_SIDE`.
+
+## Development
 
 ```bash
 uvx pytest -q tests
 ```
 
-Tests, die Mermaid oder PlantUML brauchen, werden übersprungen, wenn das Werkzeug fehlt.
+Tests that need Mermaid or PlantUML are skipped when the tool is missing.
 
-Aufbau des Repositorys:
+Repository layout:
 
 ```text
 skills/diagrammer/
-  SKILL.md      Anleitung, die Claude beim Aufruf liest
-  specs/        Syntax-Spezifikationen je Diagrammtyp
-  flavours/     Stilvorgaben
-  scripts/      render.py prüft und rendert eine Diagrammdatei
-  vendor/       Platz für eine PlantUML-jar (nicht mitversioniert)
-tests/          Tests für die Skripte
+  SKILL.md      instructions Claude reads when the skill is invoked
+  specs/        syntax specs per diagram type
+  flavours/     style rules
+  scripts/      render.py validates and renders a diagram file
+  vendor/       place for a PlantUML jar (not version-controlled)
+tests/          tests for the scripts
 ```
 
-## Lizenz
+## License
 
-MIT-Lizenz mit „Commons Clause“: Nutzen, Ändern und Weitergeben sind erlaubt, das Verkaufen
-der Software oder eines Dienstes, dessen Wert im Wesentlichen auf ihr beruht, nicht. Der
-volle Text steht in [LICENSE](LICENSE). Mermaid und PlantUML werden nicht mitgeliefert und
-stehen unter ihren eigenen Lizenzen.
+MIT License with the "Commons Clause": you may use, modify and share the software, but not
+sell it or a service whose value derives substantially from it. The full text is in
+[LICENSE](LICENSE). Mermaid and PlantUML are not included and come under their own licenses.

@@ -1,16 +1,16 @@
-# PlantUML-jar wird nicht mitversioniert (siehe README, Abschnitt Voraussetzungen)
+# The PlantUML jar is not version-controlled (see README, section Requirements)
 skills/diagrammer/vendor/*.jar
 
-# Vom Skill erzeugte Diagramme, wenn er in diesem Ordner selbst benutzt wird
+# Diagrams the skill creates when it is used inside this folder
 /diagrams/
 
-# Python und Werkzeuge
+# Python and tools
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
 
-# Lokale Einstellungen und Geheimnisse
+# Local settings and secrets
 .env
 .env.*
 config.json
