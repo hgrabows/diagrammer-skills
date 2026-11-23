@@ -4,6 +4,7 @@
 Usage:
     python3 render.py <file> [<file> ...]   # .mmd -> Mermaid, .puml -> PlantUML
     python3 render.py --check               # report which render tools are available
+    python3 render.py --flavours <spec>     # list the style rules that apply to a spec
 
 Each file is validated and rendered to an SVG and a PNG next to the source file.
 Exit code 0 means every file rendered; 1 means at least one failed.
@@ -20,6 +21,7 @@ from pathlib import Path
 # Keep the skill folder clean: importing the sibling modules must not leave __pycache__ behind.
 sys.dont_write_bytecode = True
 
+from flavours import find_flavours
 from mermaid_validator import validate_mermaid_file
 from validate_plantuml import _resolve_plantuml_jar, validate_plantuml_file
 
@@ -83,6 +85,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate and render Mermaid/PlantUML files to SVG + PNG.")
     parser.add_argument("files", nargs="*", help="Diagram files (.mmd or .puml)")
     parser.add_argument("--check", action="store_true", help="Only report which render tools are available")
+    parser.add_argument(
+        "--flavours",
+        metavar="SPEC",
+        help="List the style rule files for a spec (e.g. flowchart), general first; read them in this order",
+    )
     args = parser.parse_args(argv)
 
     if args.check:
@@ -90,6 +97,14 @@ def main(argv: list[str] | None = None) -> int:
         for name, available, detail in tools:
             print(f"{'ok     ' if available else 'MISSING'} {name}: {detail}")
         return 0 if all(available for _, available, _ in tools) else 1
+
+    if args.flavours:
+        found = find_flavours(args.flavours)
+        for scope, path in found:
+            print(f"{scope:8s} {path}")
+        if not found:
+            print("none")
+        return 0
 
     if not args.files:
         parser.error("no diagram file given")

@@ -113,9 +113,41 @@ Tested on macOS with Mermaid CLI 12.2 (Mermaid 12.3) and PlantUML 1.2025.10.
 
 ## Customising
 
-- **Style rules:** text files in [skills/diagrammer/flavours/](skills/diagrammer/flavours/).
-  `general.txt` applies to all diagrams, `<spec name>.txt` to one type, for example
-  `stateDiagram.txt` or `plantuml_er.txt`.
+### Style rules ("flavours")
+
+A flavour is a plain text file with your own wishes for how diagrams look, for example
+colours, direction or label length. Claude reads it in addition to the spec, which always
+wins on syntax. `general.txt` applies to every diagram, `<spec name>.txt` to one type, for
+example `flowchart.txt`, `stateDiagram.txt` or `plantuml_er.txt` (the spec names are in
+[skills/diagrammer/specs/](skills/diagrammer/specs/)).
+
+Flavours are looked up in three places, and for each file name the first place that has it
+wins:
+
+| Place | Folder | Use it for |
+| --- | --- | --- |
+| Project | `.diagrammer/flavours/` in the project | the look of one project, e.g. company colours |
+| User | `~/.claude/diagrammer/flavours/` | your personal defaults in every project |
+| Skill | `skills/diagrammer/flavours/` | the defaults shipped with the skill |
+
+So the same diagram type can look different per project. An empty file switches a rule off
+for that project. The user and project folders survive plugin updates; the skill folder does
+not. To see which files apply where you are:
+
+```bash
+python3 skills/diagrammer/scripts/render.py --flavours flowchart
+```
+
+Example `.diagrammer/flavours/flowchart.txt` in a project:
+
+```text
+Use left-to-right direction.
+Fill decision nodes with #FFE4B5, all other nodes with #E0F0FF.
+Keep node labels under four words.
+```
+
+### Other settings
+
 - **Syntax:** one spec per type in [skills/diagrammer/specs/](skills/diagrammer/specs/). The
   skill reads exactly one of them per call.
 - **PNG resolution:** 600 dpi by default, less for large diagrams so that the longest side

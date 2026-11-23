@@ -42,10 +42,19 @@ Talk to the user in the language they write in.
    renderer accepts. Follow it rather than memory, because the newer Mermaid types in
    particular change their syntax between versions.
 
-4. **Read style rules, if present.** `flavours/general.txt` applies to all diagrams,
-   `flavours/<spec name without .md>.txt` to the respective type (example:
-   `flavours/stateDiagram.txt`). The type-specific rule overrides the general one; neither
-   may contradict the spec. A missing file means there is no rule.
+4. **Read style rules ("flavours"), if any.** They are the user's own wishes for the look,
+   such as colours or direction. Find the files that apply with
+
+   ```bash
+   python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" --flavours <spec name without .md>
+   ```
+
+   It lists at most two files: the general rule and the rule for this type, each taken from
+   the most specific place that has one (the project's `.diagrammer/flavours/`, then the
+   user's `~/.claude/diagrammer/flavours/`, then the skill's own `flavours/`). Read them in
+   the listed order; the type rule overrides the general one, and neither may contradict
+   the spec. `none` or an empty file means there is no rule. If the user names a style in
+   the call itself ("in blue"), that wins over the files.
 
 5. **Write the diagram.** First state the core message of the source for yourself in one or
    two sentences and build the diagram around it: better the essentials clearly than

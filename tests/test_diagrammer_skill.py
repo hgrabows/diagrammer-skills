@@ -12,6 +12,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "skills" / "diagrammer" / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
+import flavours  # noqa: E402
 import mermaid_validator  # noqa: E402
 import render  # noqa: E402
 import svg_size  # noqa: E402
@@ -333,3 +334,54 @@ def test_plantuml_theme_does_not_lower_png_resolution(tmp_path: Path) -> None:
     assert sorted(path.name for path in tmp_path.iterdir()) == [
         "plain.png", "plain.puml", "plain.svg", "themed.png", "themed.puml", "themed.svg",
     ]
+
+
+def _flavour_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path, Path]:
+    """Create empty project, user and skill flavour folders and point the lookup at them."""
+    project = tmp_path / "project"
+    user = tmp_path / "user"
+    skill = tmp_path / "skill"
+    for folder in (project / ".diagrammer" / "flavours", user, skill):
+        folder.mkdir(parents=True)
+    monkeypatch.setenv("DIAGRAMMER_USER_FLAVOURS", str(user))
+    monkeypatch.setattr(flavours, "SKILL_FLAVOURS", skill)
+    return project, user, skill
+
+
+def test_flavours_most_specific_location_wins(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project, user, skill = _flavour_setup(tmp_path, monkeypatch)
+    (skill / "general.txt").write_text("skill general", encoding="utf-8")
+    (skill / "flowchart.txt").write_text("skill flowchart", encoding="utf-8")
+    (user / "flowchart.txt").write_text("user flowchart", encoding="utf-8")
+    (project / ".diagrammer" / "flavours" / "flowchart.txt").write_text("project", encoding="utf-8")
+
+    found = flavours.find_flavours("flowchart.md", cwd=project)
+    assert [(scope, path.read_text()) for scope, path in found] == [
+        ("skill", "skill general"),
+        ("project", "project"),
+    ]
+    # Another project without its own flavour falls back to the user's.
+    other = tmp_path / "other"
+    other.mkdir()
+    assert [scope for scope, _ in flavours.find_flavours("flowchart", cwd=other)] == ["skill", "user"]
+    assert flavours.find_flavours("gantt", cwd=other) == [("skill", skill / "general.txt")]
+
+
+def test_empty_project_flavour_switches_a_rule_off(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project, user, _skill = _flavour_setup(tmp_path, monkeypatch)
+    (user / "general.txt").write_text("always dark", encoding="utf-8")
+    (project / ".diagrammer" / "flavours" / "general.txt").write_text("", encoding="utf-8")
+    found = flavours.find_flavours("flowchart", cwd=project)
+    assert found == [("project", project / ".diagrammer" / "flavours" / "general.txt")]
+
+
+def test_render_lists_flavours(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    project, _user, skill = _flavour_setup(tmp_path, monkeypatch)
+    (skill / "flowchart.txt").write_text("x", encoding="utf-8")
+    monkeypatch.chdir(project)
+    assert render.main(["--flavours", "flowchart"]) == 0
+    assert capsys.readouterr().out.split() == ["skill", str(skill / "flowchart.txt")]
+    assert render.main(["--flavours", "gantt"]) == 0
+    assert capsys.readouterr().out.strip() == "none"
