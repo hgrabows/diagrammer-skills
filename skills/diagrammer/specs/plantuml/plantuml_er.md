@@ -38,6 +38,8 @@ We reuse **PlantUML class syntax** but follow these conventions:
   - Use a line with `--` as a **visual separator**.
   - List **primary keys (PK)** between the first pair of `--`.
   - List **foreign keys (FK)** and other keys between the same or a second pair of `--`.
+  - A column that is **both primary and foreign key** is marked `(PK, FK)` and belongs to the
+    primary key block. Typical case: the key columns of a join table.
   - List remaining **non-key attributes** below the last separator.
 - Do **not** specify datatypes or methods.
 - Use relationships with multiplicities using the normal class diagram arrows.
@@ -64,6 +66,7 @@ class EntityName {
 
 - `PRIMARY_KEY (PK)` marks a primary key column.  
 - `... (FK)` marks a foreign key column.  
+- `... (PK, FK)` marks a column that is part of the primary key and also a foreign key.  
 - Additional attributes are listed without any type annotations.
 
 ---
@@ -121,10 +124,10 @@ class Student {
 ' === Participation (Join Table) ===
 class Participation {
     --
-    matriculation_no (FK)
-    room_no (FK)
-    time (FK)
-    weekday (FK)
+    matriculation_no (PK, FK)
+    room_no (PK, FK)
+    time (PK, FK)
+    weekday (PK, FK)
     --
     date_of_attended_lesson
     completed_assignment
@@ -166,8 +169,9 @@ Participation -[hidden]-> Course
   - Contains metadata such as `professor_code`, `subject_code`, `assistant_code`, `course_type`, and `semester`.
 
 - **Participation**  
-  - Its key block contains only **foreign keys** linking a student to a specific course slot:  
-    `(matriculation_no, room_no, time, weekday)`. No column is marked `(PK)`.  
+  - Composite primary key `(matriculation_no, room_no, time, weekday)`. Every key column is
+    also a **foreign key**, linking a student to a specific course slot, so all four are marked
+    `(PK, FK)`.  
   - Includes descriptive attributes like `date_of_attended_lesson` and `completed_assignment`.  
   - Represents the **n:m relationship** between `Student` and `Course`.
 

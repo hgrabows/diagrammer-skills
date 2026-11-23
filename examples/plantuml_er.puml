@@ -20,10 +20,10 @@ class Student {
 ' === Participation (Join Table) ===
 class Participation {
     --
-    matriculation_no (FK)
-    room_no (FK)
-    time (FK)
-    weekday (FK)
+    matriculation_no (PK, FK)
+    room_no (PK, FK)
+    time (PK, FK)
+    weekday (PK, FK)
     --
     date_of_attended_lesson
     completed_assignment
