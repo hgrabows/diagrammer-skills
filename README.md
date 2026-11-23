@@ -121,8 +121,7 @@ wins on syntax. `general.txt` applies to every diagram, `<spec name>.txt` to one
 example `flowchart.txt`, `stateDiagram.txt` or `plantuml_er.txt` (the spec names are in
 [skills/diagrammer/specs/](skills/diagrammer/specs/)).
 
-Flavours are looked up in three places, and for each file name the first place that has it
-wins:
+Flavours can live in three places:
 
 | Place | Folder | Use it for |
 | --- | --- | --- |
@@ -130,9 +129,28 @@ wins:
 | User | `~/.claude/diagrammer/flavours/` | your personal defaults in every project |
 | Skill | `skills/diagrammer/flavours/` | the defaults shipped with the skill |
 
-So the same diagram type can look different per project. An empty file switches a rule off
-for that project. The user and project folders survive plugin updates; the skill folder does
-not. To see which files apply where you are:
+How Claude picks them for a diagram:
+
+1. It looks for `general.txt` in the project, then in the user folder, then in the skill, and
+   takes the **first one it finds**. The others are ignored, not added.
+2. It does the same for the type's file, for example `flowchart.txt`.
+3. It reads those two files (at most two). Where they disagree, the type's file wins.
+
+So a project file **replaces** the user's or the skill's file of the same name; it does not
+extend it. If a project's `flowchart.txt` should keep a rule from your user `flowchart.txt`,
+copy that rule into it. An empty file switches a rule off for that project. The user and
+project folders survive plugin updates; the skill folder does not.
+
+Example: you keep `general.txt` ("transparent background") and `flowchart.txt` ("blue
+nodes") in your user folder, and one project has its own `flowchart.txt` ("green nodes").
+
+| Diagram | In that project | In any other project |
+| --- | --- | --- |
+| Flowchart | transparent background, **green** nodes | transparent background, blue nodes |
+| Sequence diagram | transparent background | transparent background |
+
+To see which files apply in the current folder, run this in a cloned copy (as a plugin,
+Claude runs it for you on every call):
 
 ```bash
 python3 skills/diagrammer/scripts/render.py --flavours flowchart
