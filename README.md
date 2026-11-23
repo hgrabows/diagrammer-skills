@@ -115,7 +115,7 @@ Tested on macOS with Mermaid CLI 12.2 (Mermaid 12.3) and PlantUML 1.2025.10.
 
 - **Style rules:** text files in [skills/diagrammer/flavours/](skills/diagrammer/flavours/).
   `general.txt` applies to all diagrams, `<spec name>.txt` to one type, for example
-  `stateDiagram.txt` or `plantuml_class.txt`.
+  `stateDiagram.txt` or `plantuml_er.txt`.
 - **Syntax:** one spec per type in [skills/diagrammer/specs/](skills/diagrammer/specs/). The
   skill reads exactly one of them per call.
 - **PNG resolution:** 600 dpi by default, less for large diagrams so that the longest side
