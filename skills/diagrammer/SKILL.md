@@ -1,6 +1,6 @@
 ---
 name: diagrammer
-description: Creates a Mermaid or PlantUML diagram of an explicitly named type (ER diagram, sequence diagram, flowchart, class diagram, state diagram, mindmap, Gantt, C4, use case, swimlane, Venn, Ishikawa and more) from a text, a file or the current project, validates it with the real renderer and saves the source file together with an SVG and a PNG. Use when the user invokes /diagrammer or wants a rendered diagram file (Mermaid, PlantUML, SVG, PNG).
+description: Creates a Mermaid or PlantUML diagram of an explicitly named type (ER diagram, sequence diagram, flowchart, class diagram, state diagram, mindmap, Gantt, C4, use case, swimlane, Venn, Ishikawa and more) from a text, a file or the current project, validates it with the real renderer and saves the source file together with an SVG and a PNG. Use when the user invokes /diagrammer or $diagrammer, or wants a rendered diagram file (Mermaid, PlantUML, SVG, PNG).
 argument-hint: "<type> [mermaid|plantuml] [source or instruction]"
 ---
 
@@ -11,14 +11,19 @@ the source file, an SVG and a PNG.
 
 Arguments of this call: `$ARGUMENTS`
 
+If that line still shows a placeholder instead of real arguments (agents other than Claude
+Code do not fill it in), the arguments are what the user wrote after the skill's name.
+
 Examples:
 
-- `/diagrammer er` – ER diagram of whatever the conversation is currently about
+- `/diagrammer er` (in Codex: `$diagrammer er`) – ER diagram of whatever the conversation is currently about
 - `/diagrammer er plantuml docs/data-model.md` – PlantUML variant from a file
 - `/diagrammer sequence login flow between browser, API and database`
 
-Paths in these instructions are relative to this skill's directory: `${CLAUDE_SKILL_DIR}`
-(the "Base directory" named when the skill is loaded).
+Paths in these instructions are relative to this skill's directory, the folder that contains
+this file. Claude Code names it here: `${CLAUDE_SKILL_DIR}`. If that is a placeholder
+and not a path, take the folder this file was loaded from. The commands below write it as
+`<skill dir>`; put the absolute path there.
 
 Talk to the user in the language they write in.
 
@@ -46,12 +51,13 @@ Talk to the user in the language they write in.
    such as colours or direction. Find the files that apply with
 
    ```bash
-   python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" --flavours <spec name without .md>
+   python3 "<skill dir>/scripts/render.py" --flavours <spec name without .md>
    ```
 
    It lists at most two files: the general rule and the rule for this type, each taken from
    the most specific place that has one (the project's `.diagrammer/flavours/`, then the
-   user's `~/.claude/diagrammer/flavours/`, then the skill's own `flavours/`). Read them in
+   user's `~/.diagrammer/flavours/` or `~/.claude/diagrammer/flavours/`, then the skill's
+   own `flavours/`). Read them in
    the listed order; the type rule overrides the general one, and neither may contradict
    the spec. `none` or an empty file means there is no rule. If the user names a style in
    the call itself ("in blue"), that wins over the files.
@@ -70,7 +76,7 @@ Talk to the user in the language they write in.
 6. **Render and validate.**
 
    ```bash
-   python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" <path to the diagram file>
+   python3 "<skill dir>/scripts/render.py" <path to the diagram file>
    ```
 
    `OK` means: syntax valid, SVG and PNG are next to the source file. `FAIL` gives the
@@ -146,7 +152,7 @@ folder), and for class and ER diagrams also Graphviz (`dot`). If `render.py` rep
 tool is missing,
 
 ```bash
-python3 "${CLAUDE_SKILL_DIR}/scripts/render.py" --check
+python3 "<skill dir>/scripts/render.py" --check
 ```
 
 shows what is missing and how to install it. Do not install anything unasked: tell the user

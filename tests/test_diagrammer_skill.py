@@ -367,6 +367,26 @@ def test_flavours_most_specific_location_wins(tmp_path: Path, monkeypatch: pytes
     assert flavours.find_flavours("gantt", cwd=other) == [("skill", skill / "general.txt")]
 
 
+def test_user_flavours_are_found_in_the_neutral_and_the_claude_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    home = tmp_path / "home"
+    neutral = home / ".diagrammer" / "flavours"
+    claude = home / ".claude" / "diagrammer" / "flavours"
+    skill = tmp_path / "skill"
+    for folder in (neutral, claude, skill):
+        folder.mkdir(parents=True)
+    monkeypatch.delenv("DIAGRAMMER_USER_FLAVOURS", raising=False)
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.setattr(flavours, "SKILL_FLAVOURS", skill)
+    (claude / "general.txt").write_text("claude", encoding="utf-8")
+    (claude / "flowchart.txt").write_text("claude", encoding="utf-8")
+    (neutral / "flowchart.txt").write_text("neutral", encoding="utf-8")
+
+    found = flavours.find_flavours("flowchart", cwd=tmp_path)
+    assert found == [("user", claude / "general.txt"), ("user", neutral / "flowchart.txt")]
+
+
 def test_empty_project_flavour_switches_a_rule_off(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project, user, _skill = _flavour_setup(tmp_path, monkeypatch)
     (user / "general.txt").write_text("always dark", encoding="utf-8")

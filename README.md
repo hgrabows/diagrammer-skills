@@ -1,8 +1,9 @@
 # Diagrammer Skills
 
-A skill for [Claude Code](https://claude.com/claude-code) that draws a diagram from a text, a
-file or the current project. You name the diagram type, Claude writes the diagram in Mermaid
-or PlantUML, validates it with the real renderer and saves the source file together with an
+A skill for [Claude Code](https://claude.com/claude-code) and
+[Codex](https://developers.openai.com/codex) that draws a diagram from a text, a file or the
+current project. You name the diagram type, the agent writes the diagram in Mermaid or
+PlantUML, validates it with the real renderer and saves the source file together with an
 SVG and a PNG.
 
 ```text
@@ -16,7 +17,7 @@ the available types.
 
 ## Installation
 
-### Via the marketplace (recommended)
+### Claude Code: via the marketplace (recommended)
 
 Enter these two commands in Claude Code:
 
@@ -28,7 +29,7 @@ Enter these two commands in Claude Code:
 The first registers this repository as a marketplace, the second installs the skill from it.
 The command is then `/diagrammer:diagrammer`.
 
-### Alternative: clone and link
+### Claude Code: clone and link
 
 The command is then the short `/diagrammer`, available in every project:
 
@@ -42,6 +43,24 @@ mkdir -p ~/.claude/skills && ln -s "$PWD/diagrammer-skills/skills/diagrammer" ~/
 
 To use the skill in one project only, link it into that project's `.claude/skills/` folder
 instead. Update with `git pull`.
+
+### Codex: clone and link
+
+```bash
+git clone https://github.com/hgrabows/diagrammer-skills.git
+```
+
+```bash
+mkdir -p ~/.codex/skills && ln -s "$PWD/diagrammer-skills/skills/diagrammer" ~/.codex/skills/diagrammer
+```
+
+Start Codex anew afterwards. Call the skill with `$diagrammer` followed by the same
+arguments, for example `$diagrammer er plantuml docs/data-model.md`, or just ask for a
+diagram of a named type. Update with `git pull`.
+
+Mermaid renders through a headless browser, which the Codex sandbox does not let start. When
+Codex asks whether it may run `render.py` outside the sandbox, allow it; without that it
+writes the `.mmd` file but no SVG or PNG. PlantUML diagrams render inside the sandbox.
 
 ## Usage
 
@@ -116,7 +135,7 @@ Tested on macOS with Mermaid CLI 12.2 (Mermaid 12.3) and PlantUML 1.2025.10.
 ### Style rules ("flavours")
 
 A flavour is a plain text file with your own wishes for how diagrams look, for example
-colours, direction or label length. Claude reads it in addition to the spec, which always
+colours, direction or label length. The agent reads it in addition to the spec, which always
 wins on syntax. `general.txt` applies to every diagram, `<spec name>.txt` to one type, for
 example `flowchart.txt`, `stateDiagram.txt` or `plantuml_er.txt` (the spec names are in
 [skills/diagrammer/specs/](skills/diagrammer/specs/)).
@@ -126,12 +145,15 @@ Flavours can live in three places:
 | Place | Folder | Use it for |
 | --- | --- | --- |
 | Project | `.diagrammer/flavours/` in the project | the look of one project, e.g. company colours |
-| User | `~/.claude/diagrammer/flavours/` | your personal defaults in every project |
+| User | `~/.diagrammer/flavours/` or `~/.claude/diagrammer/flavours/` | your personal defaults in every project |
 | Skill | `skills/diagrammer/flavours/` | the defaults shipped with the skill |
 
-How Claude picks them for a diagram:
+Both user folders work with either agent; if both hold a file of the same name, the one in
+`~/.diagrammer/flavours/` is taken.
 
-1. It looks for `general.txt` in the project, then in the user folder, then in the skill, and
+How the agent picks them for a diagram:
+
+1. It looks for `general.txt` in the project, then in the user folders, then in the skill, and
    takes the **first one it finds**. The others are ignored, not added.
 2. It does the same for the type's file, for example `flowchart.txt`.
 3. It reads those two files (at most two). Where they disagree, the type's file wins.
@@ -149,8 +171,8 @@ nodes") in your user folder, and one project has its own `flowchart.txt` ("green
 | Flowchart | transparent background, **green** nodes | transparent background, blue nodes |
 | Sequence diagram | transparent background | transparent background |
 
-To see which files apply in the current folder, run this in a cloned copy (as a plugin,
-Claude runs it for you on every call):
+To see which files apply in the current folder, run this in a cloned copy (the agent
+runs it for you on every call):
 
 ```bash
 python3 skills/diagrammer/scripts/render.py --flavours flowchart
@@ -191,7 +213,7 @@ Repository layout:
 
 ```text
 skills/diagrammer/
-  SKILL.md      instructions Claude reads when the skill is invoked
+  SKILL.md      instructions the agent reads when the skill is invoked
   specs/        syntax specs per diagram type
   flavours/     style rules
   scripts/      render.py validates and renders a diagram file

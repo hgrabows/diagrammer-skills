@@ -6,7 +6,8 @@ kinds, `general.txt` for every diagram and `<spec name>.txt` for one type (for e
 first, and the first file found wins:
 
 1. project: `.diagrammer/flavours/` in the current working directory
-2. user:    `~/.claude/diagrammer/flavours/` (or DIAGRAMMER_USER_FLAVOURS)
+2. user:    `~/.diagrammer/flavours/`, then `~/.claude/diagrammer/flavours/`
+            (or only the folder named in DIAGRAMMER_USER_FLAVOURS)
 3. skill:   `flavours/` inside the skill, shipped with it
 
 So a project can give the same diagram type other colours than the user's default.
@@ -25,10 +26,18 @@ GENERAL = "general"
 
 def flavour_dirs(cwd: Optional[Path] = None) -> List[Tuple[str, Path]]:
     """Return the (scope, directory) pairs to search, most specific first."""
-    user = os.environ.get("DIAGRAMMER_USER_FLAVOURS") or str(Path.home() / ".claude" / "diagrammer" / "flavours")
+    override = os.environ.get("DIAGRAMMER_USER_FLAVOURS")
+    if override:
+        user_dirs = [Path(override).expanduser()]
+    else:
+        # The first works with every agent; the second is where Claude Code users keep theirs.
+        user_dirs = [
+            Path.home() / ".diagrammer" / "flavours",
+            Path.home() / ".claude" / "diagrammer" / "flavours",
+        ]
     return [
         ("project", (cwd or Path.cwd()) / PROJECT_SUBDIR),
-        ("user", Path(user).expanduser()),
+        *(("user", directory) for directory in user_dirs),
         ("skill", SKILL_FLAVOURS),
     ]
 
