@@ -12,6 +12,8 @@ SVG and a PNG.
 /diagrammer:diagrammer sequence login flow between browser, API and database
 ```
 
+In Codex the same calls start with `$diagrammer`, for example `$diagrammer er`.
+
 The skill does not guess the type. If it is missing or ambiguous, the skill asks and shows
 the available types.
 
@@ -64,9 +66,15 @@ writes the `.mmd` file but no SVG or PNG. PlantUML diagrams render inside the sa
 
 ## Usage
 
-```text
-/diagrammer:diagrammer <type> [mermaid|plantuml] [source or instruction]
-```
+The arguments are the same in both agents, only the start of the call differs:
+
+| Agent | Call |
+| --- | --- |
+| Claude Code, installed via the marketplace | `/diagrammer:diagrammer <type> [mermaid\|plantuml] [source or instruction]` |
+| Claude Code, cloned and linked | `/diagrammer <type> [mermaid\|plantuml] [source or instruction]` |
+| Codex | `$diagrammer <type> [mermaid\|plantuml] [source or instruction]` |
+
+In both you can also just ask in your own words for a diagram of a named type.
 
 - **Type:** a keyword from the list below, in English or German (`er`, `sequence`, `state`,
   `flowchart`, `class`, …).
